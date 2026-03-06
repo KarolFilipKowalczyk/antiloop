@@ -61,7 +61,11 @@ The consciousness band — the ratio of mutual information carried by edges vers
 
 Anti-loop networks show more sharp transitions (14 across all metrics) than matched random controls (10), consistent with the prediction that constraint-driven growth produces discrete complexity levels rather than smooth scaling. A growing random graph — same number of nodes and edges at each step, but without the anti-loop constraint — shows gentler, more gradual property changes.
 
-This is preliminary (2 seeds in quick mode; a full 30-seed run is needed for statistical confidence), and it's a toy model, not a cosmological simulation. But the qualitative prediction holds: anti-loop growth produces discrete structural thresholds. The game patches itself.
+There is a second threshold that operates at the level of individual nodes rather than the network. When we varied the memory depth of each node — the number of distinguishable internal states — we found that the consciousness band does not exist at low memory. Nodes with only 4 or 16 possible configurations saturate their state space almost immediately; every state gets visited, pressure is universal, and the anti-loop constraint has no room to create structured correlations. The MI ratio at 2-bit memory is 0.81 — anti-loop edges actually carry *less* mutual information than non-edges. As memory increases, the ratio climbs: 0.81 at 4 bits, 0.91 at 6 bits, and finally crosses above 1.0 to reach 1.15 at 8 bits. The band turns on between 6 and 8 bits of memory per node. Below that threshold, the substrate is too shallow for structured information flow, regardless of how many connections exist.
+
+This is the "leveling up" operating at the component level. It is not enough for the network to be large. Each node must also have sufficient internal complexity — enough memory to sustain non-trivial dynamics before looping. A universe of simple entities, no matter how well connected, cannot support the kind of correlated information flow that the consciousness band represents. Depth and breadth are both required.
+
+This is preliminary (2 seeds in quick mode; a full 30-seed run is needed for statistical confidence), and it's a toy model, not a cosmological simulation. But the qualitative prediction holds: anti-loop growth produces discrete structural thresholds, both at the network level and at the node level. The game patches itself.
 
 ## What would change our minds
 

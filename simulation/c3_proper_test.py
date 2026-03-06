@@ -12,6 +12,8 @@ Addresses all known flaws in the preliminary test (topology_simulation.py):
 Usage:
     python simulation/c3_proper_test.py              # full run (30 seeds, ~20 min)
     python simulation/c3_proper_test.py --quick       # quick test (3 seeds, ~2 min)
+    python simulation/c3_proper_test.py --gui         # full run with progress window
+    python simulation/c3_proper_test.py --quick --gui # quick test with progress window
 
 Outputs:
     simulation/results/c3_degree_distributions.png
@@ -22,11 +24,17 @@ Outputs:
 
 import argparse
 import os
+import queue
 import sys
+import threading
 import time
+import tkinter as tk
+from tkinter import ttk
 import warnings
 from dataclasses import dataclass, field
 
+import matplotlib
+matplotlib.use("Agg")  # non-interactive backend — we use tkinter for GUI
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -34,6 +42,99 @@ import powerlaw
 
 # Suppress powerlaw's noisy warnings — we check fit quality ourselves
 warnings.filterwarnings("ignore", module="powerlaw")
+
+
+# ============================================================
+# Progress Window (tkinter)
+# ============================================================
+
+class ProgressWindow:
+    """Tkinter window showing simulation progress."""
+
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("Antiloop C3 Test")
+        self.root.geometry("620x400")
+        self.root.resizable(True, True)
+
+        self._msg_queue = queue.Queue()
+        self._done = False
+
+        frame = ttk.Frame(self.root, padding=12)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        # Phase label
+        self._phase_var = tk.StringVar(value="Initializing...")
+        ttk.Label(frame, textvariable=self._phase_var,
+                  font=("Segoe UI", 11, "bold")).pack(anchor=tk.W)
+
+        # Status label
+        self._status_var = tk.StringVar(value="")
+        ttk.Label(frame, textvariable=self._status_var,
+                  font=("Segoe UI", 9)).pack(anchor=tk.W, pady=(2, 6))
+
+        # Progress bar
+        self._progress = ttk.Progressbar(frame, mode="determinate",
+                                         maximum=100, length=580)
+        self._progress.pack(fill=tk.X, pady=(0, 8))
+
+        # Percentage label
+        self._pct_var = tk.StringVar(value="0%")
+        ttk.Label(frame, textvariable=self._pct_var,
+                  font=("Segoe UI", 9)).pack(anchor=tk.E)
+
+        # Log area
+        self._log = tk.Text(frame, height=14, font=("Consolas", 9),
+                            state=tk.DISABLED, bg="#1e1e1e", fg="#d4d4d4",
+                            wrap=tk.WORD)
+        self._log.pack(fill=tk.BOTH, expand=True, pady=(6, 0))
+
+        # Poll for updates
+        self.root.after(50, self._poll)
+
+    def update(self, step, total, phase, status):
+        """Thread-safe progress update (called from worker thread)."""
+        self._msg_queue.put(("progress", step, total, phase, status))
+
+    def log(self, text):
+        """Thread-safe log line (called from worker thread)."""
+        self._msg_queue.put(("log", text))
+
+    def finish(self):
+        """Signal that the experiment is done."""
+        self._msg_queue.put(("done",))
+
+    def _poll(self):
+        """Process queued messages on the main thread."""
+        try:
+            while True:
+                msg = self._msg_queue.get_nowait()
+                if msg[0] == "progress":
+                    _, step, total, phase, status = msg
+                    pct = (step / total * 100) if total > 0 else 0
+                    self._progress["value"] = pct
+                    self._pct_var.set(f"{pct:.0f}%")
+                    self._phase_var.set(phase)
+                    self._status_var.set(status)
+                elif msg[0] == "log":
+                    self._log.config(state=tk.NORMAL)
+                    self._log.insert(tk.END, msg[1] + "\n")
+                    self._log.see(tk.END)
+                    self._log.config(state=tk.DISABLED)
+                elif msg[0] == "done":
+                    self._done = True
+                    self._phase_var.set("Done")
+                    self._status_var.set("Experiment complete — close this window")
+                    self._progress["value"] = 100
+                    self._pct_var.set("100%")
+        except queue.Empty:
+            pass
+        if not self._done:
+            self.root.after(50, self._poll)
+
+    def run(self):
+        """Start the tkinter main loop (must be called from main thread)."""
+        self.root.mainloop()
 
 # ============================================================
 # FSM Node
@@ -316,15 +417,35 @@ def format_result(r):
 # Main experiment
 # ============================================================
 
-def run_experiment(n_seeds, max_nodes, mem_bits, out_dir):
+def _count_work_units(n_seeds):
+    """Count total simulation runs for progress tracking."""
+    sens_seeds = min(10, n_seeds)
+    part1 = n_seeds          # antiloop + control per seed
+    part2 = (3 + 5 + 5) * sens_seeds  # hash(3) + thresh(5) + spawn(5)
+    part3 = sens_seeds       # growth vs cap
+    return part1 + part2 + part3
+
+
+def run_experiment(n_seeds, max_nodes, mem_bits, out_dir, progress_cb=None):
     """Run the full C3 experiment."""
 
     os.makedirs(out_dir, exist_ok=True)
     output_lines = []
 
+    total_work = _count_work_units(n_seeds)
+    work_done = 0
+
+    def progress(phase, status):
+        nonlocal work_done
+        work_done += 1
+        if progress_cb:
+            progress_cb(work_done, total_work, phase, status)
+
     def log(msg=""):
         print(msg)
         output_lines.append(msg)
+        if progress_cb:
+            progress_cb._log_line(msg)
 
     log("=" * 70)
     log("PROPER C3 TEST: Scale-Free Topology from Anti-Loop Constraint")
@@ -379,6 +500,9 @@ def run_experiment(n_seeds, max_nodes, mem_bits, out_dir):
         ct_a = f"{r_ct['alpha']:.2f}" if r_ct["alpha"] else "N/A"
         log(f"  seed {seed:>2}: antiloop alpha={al_a}  control alpha={ct_a}  "
             f"({elapsed:.1f}s)")
+
+        progress("Part 1: Anti-loop vs control",
+                 f"Seed {i+1}/{n_seeds}  |  alpha={al_a}")
 
         if i == 0:
             example_antiloop_G = G_final
@@ -438,6 +562,8 @@ def run_experiment(n_seeds, max_nodes, mem_bits, out_dir):
             r = analyze_degree_distribution(G, f"hash_{hf}_s{seed}")
             if r["alpha"] is not None:
                 alphas.append(r["alpha"])
+            progress("Part 2: Sensitivity — hash function",
+                     f"hash={hf}")
         arr = np.array(alphas) if alphas else np.array([])
         sensitivity_results[f"hash_{hf}"] = arr
         if len(arr):
@@ -458,6 +584,8 @@ def run_experiment(n_seeds, max_nodes, mem_bits, out_dir):
             r = analyze_degree_distribution(G, f"thresh_{thresh}_s{seed}")
             if r["alpha"] is not None:
                 alphas.append(r["alpha"])
+            progress("Part 2: Sensitivity — pressure threshold",
+                     f"threshold={thresh}")
         arr = np.array(alphas) if alphas else np.array([])
         sensitivity_results[f"thresh_{thresh}"] = arr
         if len(arr):
@@ -478,6 +606,8 @@ def run_experiment(n_seeds, max_nodes, mem_bits, out_dir):
             r = analyze_degree_distribution(G, f"spawn_{sp}_s{seed}")
             if r["alpha"] is not None:
                 alphas.append(r["alpha"])
+            progress("Part 2: Sensitivity — spawn probability",
+                     f"spawn={sp}")
         arr = np.array(alphas) if alphas else np.array([])
         sensitivity_results[f"spawn_{sp}"] = arr
         if len(arr):
@@ -508,6 +638,7 @@ def run_experiment(n_seeds, max_nodes, mem_bits, out_dir):
             growth_alphas.append(r_gr["alpha"])
         if r_cp["alpha"] is not None:
             cap_alphas.append(r_cp["alpha"])
+        progress("Part 3: Growth vs cap phase", f"seed {seed}")
 
     if growth_alphas:
         g_arr = np.array(growth_alphas)
@@ -699,6 +830,33 @@ def run_experiment(n_seeds, max_nodes, mem_bits, out_dir):
 
 
 # ============================================================
+# Progress callback adapter
+# ============================================================
+
+class _ProgressAdapter:
+    """Bridges run_experiment's progress/log calls to a ProgressWindow."""
+
+    def __init__(self, window):
+        self.window = window
+
+    def __call__(self, step, total, phase, status):
+        self.window.update(step, total, phase, status)
+
+    def _log_line(self, text):
+        self.window.log(text)
+
+
+class _NoOpProgress:
+    """No-op adapter when running without GUI."""
+
+    def __call__(self, step, total, phase, status):
+        pass
+
+    def _log_line(self, text):
+        pass
+
+
+# ============================================================
 # Entry point
 # ============================================================
 
@@ -712,10 +870,29 @@ if __name__ == "__main__":
                         help="Max nodes per graph (default: 500)")
     parser.add_argument("--mem", type=int, default=8,
                         help="FSM memory bits (default: 8)")
+    parser.add_argument("--gui", action="store_true",
+                        help="Show progress window")
     args = parser.parse_args()
 
     n_seeds = args.seeds or (3 if args.quick else 30)
     out_dir = os.path.join(os.path.dirname(__file__), "results")
 
-    run_experiment(n_seeds=n_seeds, max_nodes=args.nodes,
-                   mem_bits=args.mem, out_dir=out_dir)
+    if args.gui:
+        win = ProgressWindow()
+        adapter = _ProgressAdapter(win)
+
+        def worker():
+            try:
+                run_experiment(n_seeds=n_seeds, max_nodes=args.nodes,
+                               mem_bits=args.mem, out_dir=out_dir,
+                               progress_cb=adapter)
+            finally:
+                win.finish()
+
+        t = threading.Thread(target=worker, daemon=True)
+        t.start()
+        win.run()  # tkinter main loop on main thread
+    else:
+        run_experiment(n_seeds=n_seeds, max_nodes=args.nodes,
+                       mem_bits=args.mem, out_dir=out_dir,
+                       progress_cb=_NoOpProgress())

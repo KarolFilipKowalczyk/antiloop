@@ -1,101 +1,74 @@
 ======================================================================
 PROPER C3 TEST: Scale-Free Topology from Anti-Loop Constraint
 ======================================================================
-Seeds: 30  |  Max nodes: 500  |  Memory: 8-bit
+Seeds: 3  |  Max nodes: 500  |  Memory: 8-bit
 
 ----------------------------------------------------------------------
 PART 1: Anti-loop vs growing random graph control
 ----------------------------------------------------------------------
-  seed  0: antiloop alpha=2.24  control alpha=2.73  (0.7s)
-  seed  1: antiloop alpha=2.49  control alpha=2.69  (0.8s)
-  seed  2: antiloop alpha=2.49  control alpha=2.35  (0.9s)
-  seed  3: antiloop alpha=2.37  control alpha=2.71  (0.8s)
-  seed  4: antiloop alpha=2.38  control alpha=2.43  (0.7s)
-  seed  5: antiloop alpha=2.50  control alpha=2.55  (0.9s)
-  seed  6: antiloop alpha=2.46  control alpha=2.65  (1.0s)
-  seed  7: antiloop alpha=2.47  control alpha=2.31  (0.8s)
-  seed  8: antiloop alpha=2.47  control alpha=2.18  (0.8s)
-  seed  9: antiloop alpha=2.47  control alpha=2.51  (0.7s)
-  seed 10: antiloop alpha=2.27  control alpha=2.60  (0.7s)
-  seed 11: antiloop alpha=2.46  control alpha=2.77  (0.8s)
-  seed 12: antiloop alpha=2.40  control alpha=2.94  (0.8s)
-  seed 13: antiloop alpha=2.25  control alpha=2.35  (0.6s)
-  seed 14: antiloop alpha=2.49  control alpha=2.02  (0.7s)
-  seed 15: antiloop alpha=2.38  control alpha=2.55  (0.7s)
-  seed 16: antiloop alpha=2.28  control alpha=2.76  (0.6s)
-  seed 17: antiloop alpha=2.33  control alpha=2.65  (0.8s)
-  seed 18: antiloop alpha=2.53  control alpha=2.98  (0.8s)
-  seed 19: antiloop alpha=2.39  control alpha=2.15  (0.7s)
-  seed 20: antiloop alpha=2.51  control alpha=2.90  (0.7s)
-  seed 21: antiloop alpha=2.47  control alpha=2.85  (0.7s)
-  seed 22: antiloop alpha=2.46  control alpha=2.32  (0.7s)
-  seed 23: antiloop alpha=2.55  control alpha=2.66  (0.7s)
-  seed 24: antiloop alpha=2.26  control alpha=2.53  (0.6s)
-  seed 25: antiloop alpha=2.48  control alpha=2.95  (0.7s)
-  seed 26: antiloop alpha=2.48  control alpha=2.52  (0.6s)
-  seed 27: antiloop alpha=2.51  control alpha=2.63  (0.7s)
-  seed 28: antiloop alpha=2.55  control alpha=2.52  (0.7s)
-  seed 29: antiloop alpha=2.42  control alpha=2.95  (0.6s)
+  seed  0: antiloop alpha=2.64  control alpha=2.97  (0.8s)
+  seed  1: antiloop alpha=2.49  control alpha=2.89  (0.8s)
+  seed  2: antiloop alpha=2.74  control alpha=2.35  (0.8s)
 
-Anti-loop alpha:  mean=2.428  std=0.091  range=[2.237, 2.553]
-Control alpha:    mean=2.590  std=0.247  range=[2.017, 2.983]
-BA reference:     alpha=2.753
+Anti-loop alpha:  mean=2.626  std=0.103  range=[2.494, 2.744]
+Control alpha:    mean=2.736  std=0.273  range=[2.353, 2.967]
+BA reference:     alpha=2.645
 
-Total time: 21.9s
+Total time: 2.3s
 
 Detailed power-law analysis (seed 0):
   antiloop_seed0:
-    alpha = 2.237 +/- 0.066  (xmin = 3, n_tail = 351)
-    vs exponential:  R=+4.666  p=0.0000  power_law BETTER ***
-    vs lognormal:    R=-0.518  p=0.6041  lognormal BETTER ns
+    alpha = 2.638 +/- 0.096  (xmin = 4, n_tail = 292)
+    vs exponential:  R=+6.500  p=0.0000  power_law BETTER ***
+    vs lognormal:    R=-0.959  p=0.3378  lognormal BETTER ns
   control_seed0:
-    alpha = 2.729 +/- 0.117  (xmin = 8, n_tail = 219)
-    vs exponential:  R=-7.217  p=0.0000  exponential BETTER ***
-    vs lognormal:    R=-4.968  p=0.0000  lognormal BETTER ***
+    alpha = 2.967 +/- 0.140  (xmin = 9, n_tail = 198)
+    vs exponential:  R=-5.551  p=0.0000  exponential BETTER ***
+    vs lognormal:    R=-3.923  p=0.0001  lognormal BETTER ***
   barabasi_albert:
-    alpha = 2.753 +/- 0.172  (xmin = 7, n_tail = 104)
-    vs exponential:  R=+2.580  p=0.0099  power_law BETTER ***
-    vs lognormal:    R=-0.353  p=0.7238  lognormal BETTER ns
+    alpha = 2.645 +/- 0.074  (xmin = 3, n_tail = 500)
+    vs exponential:  R=+3.719  p=0.0002  power_law BETTER ***
+    vs lognormal:    R=-0.694  p=0.4875  lognormal BETTER ns
 
 ----------------------------------------------------------------------
 PART 2: Sensitivity analysis
 ----------------------------------------------------------------------
 
   Hash function sensitivity:
-         xor: alpha=2.436 +/- 0.079  (n=10)
-         sum: alpha=2.490 +/- 0.131  (n=10)
-     product: alpha=2.484 +/- 0.139  (n=10)
+         xor: alpha=2.626 +/- 0.103  (n=3)
+         sum: alpha=2.615 +/- 0.010  (n=3)
+     product: alpha=2.466 +/- 0.193  (n=3)
 
   Pressure threshold sensitivity:
-    thresh=0.5: alpha=2.514 +/- 0.174  (n=10)
-    thresh=0.6: alpha=2.372 +/- 0.064  (n=10)
-    thresh=0.7: alpha=2.436 +/- 0.079  (n=10)
-    thresh=0.8: alpha=2.320 +/- 0.084  (n=10)
-    thresh=0.9: alpha=2.346 +/- 0.088  (n=10)
+    thresh=0.5: alpha=2.451 +/- 0.189  (n=3)
+    thresh=0.6: alpha=2.333 +/- 0.030  (n=3)
+    thresh=0.7: alpha=2.626 +/- 0.103  (n=3)
+    thresh=0.8: alpha=2.410 +/- 0.200  (n=3)
+    thresh=0.9: alpha=2.440 +/- 0.199  (n=3)
 
   Spawn probability sensitivity:
-    spawn=0.1: alpha=2.945 +/- 0.035  (n=10)
-    spawn=0.2: alpha=2.450 +/- 0.129  (n=10)
-    spawn=0.3: alpha=2.436 +/- 0.079  (n=10)
-    spawn=0.5: alpha=2.217 +/- 0.099  (n=10)
-    spawn=0.7: alpha=2.257 +/- 0.030  (n=10)
+    spawn=0.1: alpha=2.979 +/- 0.023  (n=3)
+    spawn=0.2: alpha=2.372 +/- 0.066  (n=3)
+    spawn=0.3: alpha=2.626 +/- 0.103  (n=3)
+    spawn=0.5: alpha=2.635 +/- 0.018  (n=3)
+    spawn=0.7: alpha=2.818 +/- 0.046  (n=3)
 
 ----------------------------------------------------------------------
 PART 3: Growth phase vs cap phase topology
 ----------------------------------------------------------------------
-  Growth phase:  alpha=2.436 +/- 0.077
-  Cap phase:     alpha=2.436 +/- 0.079
+  Growth phase:  alpha=2.626 +/- 0.108
+  Cap phase:     alpha=2.626 +/- 0.103
 
 ======================================================================
 VERDICT
 ======================================================================
-Anti-loop mean alpha:  2.428  (scale-free range: 2-3)
-Control mean alpha:    2.590
-Power law preferred over exponential: 30/30 (100%) of anti-loop runs
+Anti-loop mean alpha:  2.626  (scale-free range: 2-3)
+Control mean alpha:    2.736
+Power law preferred over exponential: 3/3 (100%) of anti-loop runs
 
 RESULT: POSITIVE — Anti-loop constraint produces scale-free-like
 degree distributions with alpha in the classic range.
 WARNING: Control also shows similar alpha. The effect may be
 driven by the growth process, not the anti-loop constraint.
 
-Hash function robustness: alpha spread = 0.05 (OK)
+Hash function robustness: alpha spread = 0.16 (OK)

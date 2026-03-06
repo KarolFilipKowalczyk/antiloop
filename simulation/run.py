@@ -7,11 +7,13 @@ Unified entry point for all antiloop experiments.
 Usage:
     python -m simulation.run c3 --quick --gui
     python -m simulation.run coupling
+    python -m simulation.run o9 --quick --gui
     python -m simulation.run c3 --seeds 30 --nodes 500 --mem 8
 
 Available experiments:
     c3        Scale-free topology test (O5)
     coupling  Coupling constant measurement (negative result)
+    o9        1/f spectral analysis (O9)
 """
 
 import argparse
@@ -34,6 +36,11 @@ EXPERIMENTS = {
         "module": "simulation.experiments.coupling",
         "title": "Coupling Constant",
         "description": "Measure coupling ratio vs graph size (known negative result)",
+    },
+    "o9": {
+        "module": "simulation.experiments.o9_spectral",
+        "title": "O9 Spectral Analysis",
+        "description": "Test 1/f spectrum at different temperatures (O9)",
     },
 }
 
@@ -76,6 +83,11 @@ def main():
         kwargs["max_nodes"] = args.nodes
         kwargs["mem_bits"] = args.mem
     elif args.experiment == "coupling":
+        kwargs["mem_bits"] = args.mem
+    elif args.experiment == "o9":
+        n_seeds = args.seeds or (3 if args.quick else 10)
+        kwargs["n_seeds"] = n_seeds
+        kwargs["max_nodes"] = min(args.nodes, 200)
         kwargs["mem_bits"] = args.mem
 
     if args.gui:

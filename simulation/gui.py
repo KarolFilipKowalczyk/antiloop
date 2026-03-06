@@ -18,10 +18,21 @@ Usage from an experiment:
     run_with_gui(my_experiment, out_dir="results")
 """
 
+import os
 import queue
 import threading
 import tkinter as tk
 from tkinter import ttk
+
+
+def _find_icon():
+    """Locate the antiloop icon file."""
+    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    for ext in ("ico", "png"):
+        path = os.path.join(base, "logo", f"antiloop_icon.{ext}")
+        if os.path.isfile(path):
+            return path
+    return None
 
 
 class ProgressWindow:
@@ -29,9 +40,21 @@ class ProgressWindow:
 
     def __init__(self, title="Antiloop Experiment"):
         self.root = tk.Tk()
-        self.root.title(title)
+        self.root.title(f"ANTILOPE - {title}")
         self.root.geometry("620x400")
         self.root.resizable(True, True)
+
+        # Set window icon
+        icon_path = _find_icon()
+        if icon_path:
+            try:
+                if icon_path.endswith(".ico"):
+                    self.root.iconbitmap(icon_path)
+                else:
+                    icon = tk.PhotoImage(file=icon_path)
+                    self.root.iconphoto(True, icon)
+            except tk.TclError:
+                pass
 
         self._msg_queue = queue.Queue()
         self._done = False

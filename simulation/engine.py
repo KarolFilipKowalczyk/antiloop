@@ -68,10 +68,20 @@ class FSMNode:
         """Loop pressure: fraction of config space already visited."""
         return len(self.visited) / self.config_space
 
-    def step(self, nb_configs, hash_fn=HASH_XOR):
-        """Transition based on neighbor configurations."""
+    def step(self, nb_configs, hash_fn=HASH_XOR, temperature=0.0, rng=None):
+        """Transition based on neighbor configurations.
+
+        Args:
+            nb_configs: list of neighbor configuration values
+            hash_fn: hash function to aggregate neighbor configs
+            temperature: probability of replacing output with random state (0=deterministic, 1=pure noise)
+            rng: numpy random generator (required if temperature > 0)
+        """
         h = compute_hash(nb_configs, hash_fn) % self.config_space
-        self.config = self.table[self.config, h]
+        new_config = self.table[self.config, h]
+        if temperature > 0 and rng is not None and rng.random() < temperature:
+            new_config = rng.integers(0, self.config_space)
+        self.config = new_config
         self.visited.add(self.config)
 
 
@@ -120,7 +130,8 @@ def init_ring_graph(n, mem_bits, rng):
 def run_antiloop(mem_bits, max_nodes, initial_n=10, seed=42,
                  hash_fn=HASH_XOR, pressure_threshold=0.7,
                  spawn_prob=0.3, max_stressed_per_step=5,
-                 max_steps=10000, record_trajectories=False):
+                 max_steps=10000, record_trajectories=False,
+                 temperature=0.0):
     """Run anti-loop graph growth.
 
     Args:
@@ -134,6 +145,7 @@ def run_antiloop(mem_bits, max_nodes, initial_n=10, seed=42,
         max_stressed_per_step: limit on stressed-node actions per step
         max_steps: hard step limit
         record_trajectories: if True, record per-node config at each step
+        temperature: probability of random state injection per transition (0=deterministic)
 
     Returns:
         G_growth: graph snapshot when node cap is first reached
@@ -160,7 +172,7 @@ def run_antiloop(mem_bits, max_nodes, initial_n=10, seed=42,
         node_list = list(G.nodes())
         for nid in node_list:
             nb = [nodes[n].config for n in G.neighbors(nid)]
-            nodes[nid].step(nb, hash_fn)
+            nodes[nid].step(nb, hash_fn, temperature=temperature, rng=rng)
 
         if record_trajectories:
             for nid in node_list:

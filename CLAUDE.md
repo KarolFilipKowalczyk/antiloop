@@ -35,7 +35,8 @@ antiloop/
 │   │   ├── c2_suffering.py            — C2 suffering (edge loss) ✓ THRESHOLD POSITIVE
 │   │   ├── c2_targeted_suffering.py   — C2v2 targeted suffering (MI-ranked removal) ✓ POSITIVE (inverted)
 │   │   ├── c3_topology.py             — C3 scale-free topology ✓ POSITIVE (30 seeds, CSN)
-│   │   ├── complexity_thresholds.py   — unified O7+O14+O15: thresholds during growth ⏳ NEW
+│   │   ├── complexity_thresholds.py   — unified O7+O14+O15: thresholds during growth ✓ POSITIVE (quick)
+│   │   ├── memory_scaling.py          — O17 memory scaling (C1 + C2 across mem_bits) ⏳ PARTIAL
 │   │   ├── coupling.py                — coupling constant test ✗ NEGATIVE
 │   │   └── o9_spectral.py             — O9 1/f spectral analysis ✗ NEGATIVE (v1, v2 planned)
 │   └── results/                       — plots and raw output
@@ -103,6 +104,20 @@ One rule: don't collapse another entity's state space. Harm = state-space contra
 - Bridges C1 (edges carry MI) with C2 (loss = contraction): the QUALITY of lost
   edge matters, not just the quantity
 
+### Memory Scaling (O17) — PARTIAL (quick, 2 seeds)
+- Tested mem_bits = 2, 4, 6, 8 (skip 10+ — MI computation too slow at config_space=1024)
+- MI ratio by memory level:
+  - mem_bits=2 (4 configs): AL=0.81, CT=1.33 — anti-loop BELOW control
+  - mem_bits=4 (16 configs): AL=0.81, CT=1.00 — anti-loop below control
+  - mem_bits=6 (64 configs): AL=0.91, CT=1.00 — approaching but still below
+  - mem_bits=8 (256 configs): AL=1.15, CT=1.00 — consciousness band emerges
+- Key finding: consciousness band requires minimum memory depth (~8 bits)
+  At low memory, nodes exhaust their state space so fast that anti-loop edges
+  carry LESS information than random topology. The band "turns on" between 6-8 bits.
+- C2 gradient test at mem_bits=2,4: still no gradient (binary collapse at isolation)
+- Peak is at boundary of tested range — may be higher. Needs 30-seed run.
+- Pressure: near 1.0 at mem_bits 2-6 (fully saturated), drops to 0.45 at mem_bits=8
+
 ### Coupling experiment — NEGATIVE
 - Measured fraction of transitions where neighbors changed outcome
 - Converges to ~0.879 by N=50, independent of graph size
@@ -129,10 +144,10 @@ One rule: don't collapse another entity's state space. Harm = state-space contra
 - `python simulation/run.py complexity_thresholds --time 1800`
 - Quick run was positive; need statistical power for publishable results
 
-### 2. Memory scaling (O17)
-- Run C1 and C2 across mem_bits = 2, 4, 6, 8, 10, 12
-- Find the memory sweet spot for consciousness band
-- Test whether C2 gradient emerges at low memory
+### 2. Full memory scaling run (30 seeds)
+- `python simulation/run.py memory_scaling --time 1800`
+- Quick run shows band turns on between 6-8 bits; need statistical power
+- Peak at boundary — consider adding mem_bits=9 to narrow the transition
 
 ### 4. O9v2 spectral analysis
 - Graph-level observables during growth (not per-node post-growth)

@@ -1,0 +1,71 @@
+======================================================================
+O17: MEMORY SCALING -- The Consciousness Band Sweet Spot
+======================================================================
+At what memory size does the MI ratio peak?
+
+Memory levels: [2, 4, 6, 8]
+Max nodes: {2: 500, 4: 500, 6: 500, 8: 500}
+
+Calibrating each memory level...
+  mem_bits= 2: 2.30s @ 80 nodes -> 89.8s estimated @ 500 nodes
+  mem_bits= 4: 2.83s @ 80 nodes -> 110.5s estimated @ 500 nodes
+  mem_bits= 6: 3.67s @ 80 nodes -> 143.2s estimated @ 500 nodes
+  mem_bits= 8: 15.51s @ 80 nodes -> 605.8s estimated @ 500 nodes
+
+  Budget: 60s  |  Seeds per level: {2: 2, 4: 2, 6: 2, 8: 2}
+
+=== mem_bits=2 (config_space=4, nodes=500, seeds=2) ===
+  Seed 0: AL ratio=0.808 CT ratio=1.381 pressure=0.962 steps=502
+  Seed 1: AL ratio=0.809 CT ratio=1.279 pressure=0.969 steps=502
+
+=== mem_bits=4 (config_space=16, nodes=500, seeds=2) ===
+  Seed 0: AL ratio=0.809 CT ratio=1.004 pressure=1.000 steps=502
+  Seed 1: AL ratio=0.803 CT ratio=0.998 pressure=1.000 steps=502
+
+=== mem_bits=6 (config_space=64, nodes=500, seeds=2) ===
+  Seed 0: AL ratio=0.916 CT ratio=1.002 pressure=0.964 steps=502
+  Seed 1: AL ratio=0.911 CT ratio=1.001 pressure=0.959 steps=502
+
+=== mem_bits=8 (config_space=256, nodes=500, seeds=2) ===
+  Seed 0: AL ratio=1.126 CT ratio=1.000 pressure=0.449 steps=611
+  Seed 1: AL ratio=1.176 CT ratio=1.000 pressure=0.454 steps=611
+
+======================================================================
+ANALYSIS
+======================================================================
+
+  mem_bits    AL ratio    CT ratio       Gap    Pressure     Steps   Seeds
+  ------------------------------------------------------------------------
+         2       0.808       1.330    -0.521       0.965       502       2
+         4       0.806       1.001    -0.196       1.000       502       2
+         6       0.913       1.002    -0.088       0.961       502       2
+         8       1.151       1.000     0.150       0.451       611       2
+
+  Peak MI ratio gap at mem_bits = 8 (gap = 0.150)
+
+  C2 Gradient Test (low memory):
+    mem_bits=2:
+      25% removed: MI retention = 0.449 (55.1% loss)
+      50% removed: MI retention = 0.594 (40.6% loss)
+      75% removed: MI retention = 1.097 (-9.7% loss)
+      -> No gradient (same as C2 at mem_bits=8)
+    mem_bits=4:
+      25% removed: MI retention = 0.539 (46.1% loss)
+      50% removed: MI retention = 0.560 (44.0% loss)
+      75% removed: MI retention = 0.557 (44.3% loss)
+      -> No gradient (same as C2 at mem_bits=8)
+
+  Statistical tests:
+    mem_bits=2: AL=0.808 vs CT=1.330  t=-10.26, p=0.0094
+    mem_bits=4: AL=0.806 vs CT=1.001  t=-45.83, p=0.0005
+    mem_bits=6: AL=0.913 vs CT=1.002  t=-29.86, p=0.0011
+    mem_bits=8: AL=1.151 vs CT=1.000  t=6.07, p=0.0261
+
+======================================================================
+VERDICT
+======================================================================
+
+RESULT: PARTIAL -- Band strongest at highest tested memory (mem_bits=8).
+  The peak may be beyond our tested range.
+  C2 at mem_bits=2: No gradient -- same binary behavior as mem_bits=8.
+  C2 at mem_bits=4: No gradient -- same binary behavior as mem_bits=8.

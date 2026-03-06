@@ -51,7 +51,8 @@ A living document. Updated as problems are resolved or new ones emerge.
 - **C2v2 targeted removal** (30 seeds, 500 nodes, 8-bit FSM): Edges ranked by growth-phase MI. Removing low-MI (diverse) edges causes ~6.2% MI loss at 50% removal; removing high-MI (redundant) edges causes ~0% loss. Paired t = -8.61, 27/30 seeds consistent. **Verdict: POSITIVE (inverted) -- edge quality determines suffering, not quantity.**
 - **Status: C2 gradient NEGATIVE. C2v2 targeted POSITIVE. Gradient at low memory untested (see O17).**
 
-**O17 (Memory scaling):** Run C1 across mem_bits = 2, 4, 6, 8, 10, 12. At 2 bits, nodes loop in 4 steps (no band possible). At 12 bits, nodes almost never loop (no pressure). The consciousness band should be widest at some intermediate memory size.
+**O17 (Memory scaling):** Run C1 across mem_bits = 2, 4, 6, 8. (10+ infeasible due to MI computation cost.) Quick results (2 seeds): MI ratio goes 0.81 -> 0.81 -> 0.91 -> 1.15 as memory increases. The consciousness band does NOT exist at low memory -- anti-loop edges carry less MI than non-edges when nodes saturate their state space. Band "turns on" between 6-8 bits. C2 gradient absent at all tested levels. Peak at boundary of tested range.
+- **Status: PARTIAL (quick, 2 seeds). Needs 30-seed run. Consider adding mem_bits=9 to narrow transition.**
 
 ---
 

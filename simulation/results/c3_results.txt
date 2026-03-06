@@ -6,7 +6,7 @@ Seeds: 3  |  Max nodes: 500  |  Memory: 8-bit
 ----------------------------------------------------------------------
 PART 1: Anti-loop vs growing random graph control
 ----------------------------------------------------------------------
-  seed  0: antiloop alpha=2.64  control alpha=2.97  (0.8s)
+  seed  0: antiloop alpha=2.64  control alpha=2.97  (0.7s)
   seed  1: antiloop alpha=2.49  control alpha=2.89  (0.8s)
   seed  2: antiloop alpha=2.74  control alpha=2.35  (0.8s)
 

@@ -84,8 +84,10 @@ def main():
         kwargs["n_seeds"] = n_seeds
         kwargs["max_nodes"] = args.nodes
         kwargs["mem_bits"] = args.mem
+        kwargs["time_budget"] = args.time or (60 if args.quick else 300)
     elif args.experiment == "coupling":
         kwargs["mem_bits"] = args.mem
+        kwargs["time_budget"] = args.time or (30 if args.quick else 120)
     elif args.experiment == "o9":
         n_seeds = args.seeds or (3 if args.quick else 10)
         kwargs["n_seeds"] = n_seeds

@@ -6,6 +6,9 @@ Measures the fraction of transitions where neighbors change the outcome,
 as a function of graph size. Tests whether this ratio converges to
 a non-trivial constant.
 
+Time-budgeted: calibrates on a small graph, then fits as many
+sizes as possible within the given time budget.
+
 Result: NEGATIVE. Converges to ~(cs-1)/cs, a combinatorial artifact
 of the XOR hash function, not an emergent constant.
 """
@@ -20,8 +23,11 @@ from simulation.engine import FSMNode, compute_hash, HASH_XOR
 
 TITLE = "Coupling Constant"
 
+ALL_SIZES = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
 
-def measure(num_nodes, mem_bits, avg_degree, seed=42, hash_fn=HASH_XOR):
+
+def measure(num_nodes, mem_bits, avg_degree, seed=42, hash_fn=HASH_XOR,
+            steps=None):
     """Measure coupling ratio on a fixed graph.
 
     Coupling = fraction of transitions where the neighbor-influenced
@@ -58,8 +64,9 @@ def measure(num_nodes, mem_bits, avg_degree, seed=42, hash_fn=HASH_XOR):
 
     nodes = [FSMNode(mem_bits, rng) for _ in range(num_nodes)]
 
-    # Fixed work budget: ~500k transitions
-    steps = max(20, min(500, 500000 // num_nodes))
+    # Use provided steps or default work budget (~500k transitions)
+    if steps is None:
+        steps = max(20, min(500, 500000 // num_nodes))
 
     total = 0
     changed = 0
@@ -80,17 +87,21 @@ def measure(num_nodes, mem_bits, avg_degree, seed=42, hash_fn=HASH_XOR):
     return changed / total if total > 0 else 0
 
 
-def run(mem_bits=4, out_dir=None, progress=None):
-    """Run the coupling constant experiment."""
+def run(mem_bits=4, time_budget=60, out_dir=None, progress=None):
+    """Run the coupling constant experiment.
+
+    Args:
+        time_budget: total wall-clock seconds. Calibrates on the first
+            size, then picks how many sizes fit. Default 60s.
+    """
 
     if out_dir is None:
         out_dir = os.path.join(os.path.dirname(__file__), "..", "results")
     os.makedirs(out_dir, exist_ok=True)
 
     output_lines = []
-    sizes = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
-    total_work = len(sizes)
-    work_done = 0
+    n_seeds = 3
+    seed_list = [42, 123, 456]
 
     def log(msg=""):
         output_lines.append(msg)
@@ -102,18 +113,49 @@ def run(mem_bits=4, out_dir=None, progress=None):
     log("COUPLING vs GRAPH SIZE (extrapolation to infinity)")
     log("=" * 60)
     log(f"Memory: {mem_bits}-bit ({2**mem_bits} configs), Avg degree: 4, XOR hash")
-    log(f"Work budget: ~500k transitions per measurement")
+
+    # ----------------------------------------------------------
+    # Calibration: time the smallest and a mid-sized measurement
+    # ----------------------------------------------------------
+    log("Calibrating...")
+    t0 = time.time()
+    measure(10, mem_bits, avg_degree=4, seed=42)
+    t_small = time.time() - t0
+
+    t0 = time.time()
+    measure(500, mem_bits, avg_degree=4, seed=42)
+    t_mid = time.time() - t0
+
+    # Estimate time per size: measurement scales roughly as O(nodes * steps)
+    # where steps = 500000 // nodes, so total work ≈ 500k per size.
+    # Use average of small and mid as estimate per size-seed pair.
+    sec_per_measurement = (t_small + t_mid) / 2
+    sec_per_size = sec_per_measurement * n_seeds
+
+    log(f"  Calibration: small={t_small:.3f}s  mid={t_mid:.3f}s  "
+        f"avg={sec_per_measurement:.3f}s/measurement")
+
+    # Reserve 10% for analysis
+    available = time_budget * 0.90
+    max_sizes = max(3, int(available / sec_per_size))
+    sizes = ALL_SIZES[:max_sizes]
+
+    log(f"  Budget: {time_budget}s  |  Sizes: {len(sizes)}/{len(ALL_SIZES)}  "
+        f"({sizes[0]}..{sizes[-1]})")
+    log(f"  Estimated: {len(sizes) * sec_per_size:.0f}s")
     log()
     log(f"{'Nodes':>8} {'Coupling':>10} {'1/Coupling':>10} {'Time':>8}")
     log("-" * 40)
 
+    total_work = len(sizes)
+    work_done = 0
     data_n = []
     data_c = []
 
     for n in sizes:
         t0 = time.time()
         couplings = []
-        for s in [42, 123, 456]:
+        for s in seed_list:
             c = measure(n, mem_bits, avg_degree=4, seed=s)
             couplings.append(c)
         avg_c = np.mean(couplings)

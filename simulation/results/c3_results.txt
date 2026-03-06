@@ -1,20 +1,23 @@
 ======================================================================
 PROPER C3 TEST: Scale-Free Topology from Anti-Loop Constraint
 ======================================================================
-Seeds: 3  |  Max nodes: 500  |  Memory: 8-bit
+Calibrating...
+  0.44s per run (nodes=500, mem=8-bit)
+  Budget: 60s  |  Seeds: 3  |  Sensitivity seeds: 3
+  Estimated: 48 runs x 0.44s = 21s
 
 ----------------------------------------------------------------------
 PART 1: Anti-loop vs growing random graph control
 ----------------------------------------------------------------------
   seed  0: antiloop alpha=2.64  control alpha=2.97  (0.7s)
-  seed  1: antiloop alpha=2.49  control alpha=2.89  (0.8s)
+  seed  1: antiloop alpha=2.49  control alpha=2.89  (0.7s)
   seed  2: antiloop alpha=2.74  control alpha=2.35  (0.8s)
 
 Anti-loop alpha:  mean=2.626  std=0.103  range=[2.494, 2.744]
 Control alpha:    mean=2.736  std=0.273  range=[2.353, 2.967]
 BA reference:     alpha=2.645
 
-Total time: 2.3s
+Part 1 time: 2.2s
 
 Detailed power-law analysis (seed 0):
   antiloop_seed0:

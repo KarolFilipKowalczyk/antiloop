@@ -7,9 +7,12 @@ Tests whether the anti-loop constraint produces scale-free degree distributions.
 Addresses all known flaws from the preliminary test:
   1. Growing random graph control (not static Erdos-Renyi)
   2. Clauset-Shalizi-Newman power-law test
-  3. 30 seeds with statistical summary
+  3. Multiple seeds with statistical summary
   4. Sensitivity analysis: hash function, pressure threshold, spawn probability
   5. Growth phase vs cap phase separation
+
+Time-budgeted: calibrates steps/second on the first run, then fits
+as many seeds as possible within the given time budget.
 """
 
 import os
@@ -30,27 +33,32 @@ from simulation.analysis import analyze_powerlaw, get_ccdf, format_powerlaw_resu
 TITLE = "C3 Scale-Free Topology"
 
 
-def _count_work_units(n_seeds):
-    sens_seeds = min(10, n_seeds)
-    return n_seeds + (3 + 5 + 5) * sens_seeds + sens_seeds
+def _calibrate(mem_bits, max_nodes):
+    """Time a single run_antiloop call to estimate seconds per run."""
+    t0 = time.time()
+    run_antiloop(
+        mem_bits=mem_bits, max_nodes=max_nodes, initial_n=10,
+        seed=999, hash_fn=HASH_XOR, pressure_threshold=0.7,
+        spawn_prob=0.3
+    )
+    return time.time() - t0
 
 
-def run(n_seeds=30, max_nodes=500, mem_bits=8, out_dir=None, progress=None):
-    """Run the full C3 experiment."""
+def run(n_seeds=30, max_nodes=500, mem_bits=8, time_budget=300,
+        out_dir=None, progress=None):
+    """Run the full C3 experiment.
+
+    Args:
+        time_budget: total wall-clock seconds. Calibrates on the first
+            run, then allocates seeds across parts to fit the budget.
+            Default 300s (5 min).
+    """
 
     if out_dir is None:
         out_dir = os.path.join(os.path.dirname(__file__), "..", "results")
     os.makedirs(out_dir, exist_ok=True)
 
     output_lines = []
-    total_work = _count_work_units(n_seeds)
-    work_done = 0
-
-    def step(phase, status):
-        nonlocal work_done
-        work_done += 1
-        if progress:
-            progress.update(work_done, total_work, phase, status)
 
     def log(msg=""):
         output_lines.append(msg)
@@ -62,8 +70,55 @@ def run(n_seeds=30, max_nodes=500, mem_bits=8, out_dir=None, progress=None):
     log("=" * 70)
     log("PROPER C3 TEST: Scale-Free Topology from Anti-Loop Constraint")
     log("=" * 70)
-    log(f"Seeds: {n_seeds}  |  Max nodes: {max_nodes}  |  Memory: {mem_bits}-bit")
+
+    # ----------------------------------------------------------
+    # Calibration
+    # ----------------------------------------------------------
+    log("Calibrating...")
+    sec_per_run = _calibrate(mem_bits, max_nodes)
+    log(f"  {sec_per_run:.2f}s per run (nodes={max_nodes}, mem={mem_bits}-bit)")
+
+    # Budget allocation:
+    #   Part 1: n_seeds runs (antiloop) + n_seeds runs (control) = 2*n_seeds
+    #   Part 2: 3 hash * sens_seeds + 5 thresh * sens_seeds + 5 spawn * sens_seeds = 13*sens_seeds
+    #   Part 3: sens_seeds runs
+    #   Total = 2*n_seeds + 14*sens_seeds runs
+    # Reserve 10% for plotting/analysis
+    available = time_budget * 0.90
+    total_runs_needed = 2 * n_seeds + 14 * min(10, n_seeds)
+    time_needed = total_runs_needed * sec_per_run
+
+    if time_needed > available:
+        # Scale down seeds to fit
+        # Solve: 2*s + 14*min(10,s) <= available/sec_per_run
+        max_runs = available / sec_per_run
+        # Try with sens_seeds = min(10, n_seeds)
+        # If n_seeds <= 10: total = 2*s + 14*s = 16*s, so s = max_runs/16
+        # If n_seeds > 10: total = 2*s + 140, so s = (max_runs-140)/2
+        if n_seeds <= 10:
+            n_seeds = max(2, int(max_runs / 16))
+        else:
+            n_seeds = max(2, int((max_runs - 140) / 2))
+            if n_seeds <= 10:
+                n_seeds = max(2, int(max_runs / 16))
+
+    sens_seeds = min(10, n_seeds)
+    total_runs = 2 * n_seeds + 14 * sens_seeds
+    estimated_time = total_runs * sec_per_run
+
+    log(f"  Budget: {time_budget}s  |  Seeds: {n_seeds}  |  Sensitivity seeds: {sens_seeds}")
+    log(f"  Estimated: {total_runs} runs x {sec_per_run:.2f}s = {estimated_time:.0f}s")
     log()
+
+    # Progress tracking
+    total_work = total_runs
+    work_done = 0
+
+    def step(phase, status):
+        nonlocal work_done
+        work_done += 1
+        if progress:
+            progress.update(work_done, total_work, phase, status)
 
     seeds = list(range(n_seeds))
 
@@ -136,7 +191,7 @@ def run(n_seeds=30, max_nodes=500, mem_bits=8, out_dir=None, progress=None):
     if r_ba["alpha"] is not None:
         log(f"BA reference:     alpha={r_ba['alpha']:.3f}")
 
-    log(f"\nTotal time: {total_time:.1f}s")
+    log(f"\nPart 1 time: {total_time:.1f}s")
     log()
 
     if antiloop_results:
@@ -154,12 +209,13 @@ def run(n_seeds=30, max_nodes=500, mem_bits=8, out_dir=None, progress=None):
     log("-" * 70)
 
     sensitivity_results = {}
+    sens_list = seeds[:sens_seeds]
 
     # 2a: Hash function
     log("\n  Hash function sensitivity:")
     for hf in [HASH_XOR, HASH_SUM, HASH_PRODUCT]:
         alphas = []
-        for seed in seeds[:min(10, n_seeds)]:
+        for seed in sens_list:
             _, G, _, _ = run_antiloop(
                 mem_bits=mem_bits, max_nodes=max_nodes, initial_n=10,
                 seed=seed, hash_fn=hf, pressure_threshold=0.7, spawn_prob=0.3
@@ -167,7 +223,7 @@ def run(n_seeds=30, max_nodes=500, mem_bits=8, out_dir=None, progress=None):
             r = analyze_powerlaw(G, f"hash_{hf}_s{seed}")
             if r["alpha"] is not None:
                 alphas.append(r["alpha"])
-            step("Part 2: Sensitivity \u2014 hash function", f"hash={hf}")
+            step("Part 2: Sensitivity — hash function", f"hash={hf}")
         arr = np.array(alphas) if alphas else np.array([])
         sensitivity_results[f"hash_{hf}"] = arr
         if len(arr):
@@ -179,7 +235,7 @@ def run(n_seeds=30, max_nodes=500, mem_bits=8, out_dir=None, progress=None):
     log("\n  Pressure threshold sensitivity:")
     for thresh in [0.5, 0.6, 0.7, 0.8, 0.9]:
         alphas = []
-        for seed in seeds[:min(10, n_seeds)]:
+        for seed in sens_list:
             _, G, _, _ = run_antiloop(
                 mem_bits=mem_bits, max_nodes=max_nodes, initial_n=10,
                 seed=seed, hash_fn=HASH_XOR, pressure_threshold=thresh,
@@ -188,7 +244,7 @@ def run(n_seeds=30, max_nodes=500, mem_bits=8, out_dir=None, progress=None):
             r = analyze_powerlaw(G, f"thresh_{thresh}_s{seed}")
             if r["alpha"] is not None:
                 alphas.append(r["alpha"])
-            step("Part 2: Sensitivity \u2014 pressure threshold", f"threshold={thresh}")
+            step("Part 2: Sensitivity — pressure threshold", f"threshold={thresh}")
         arr = np.array(alphas) if alphas else np.array([])
         sensitivity_results[f"thresh_{thresh}"] = arr
         if len(arr):
@@ -200,7 +256,7 @@ def run(n_seeds=30, max_nodes=500, mem_bits=8, out_dir=None, progress=None):
     log("\n  Spawn probability sensitivity:")
     for sp in [0.1, 0.2, 0.3, 0.5, 0.7]:
         alphas = []
-        for seed in seeds[:min(10, n_seeds)]:
+        for seed in sens_list:
             _, G, _, _ = run_antiloop(
                 mem_bits=mem_bits, max_nodes=max_nodes, initial_n=10,
                 seed=seed, hash_fn=HASH_XOR, pressure_threshold=0.7,
@@ -209,7 +265,7 @@ def run(n_seeds=30, max_nodes=500, mem_bits=8, out_dir=None, progress=None):
             r = analyze_powerlaw(G, f"spawn_{sp}_s{seed}")
             if r["alpha"] is not None:
                 alphas.append(r["alpha"])
-            step("Part 2: Sensitivity \u2014 spawn probability", f"spawn={sp}")
+            step("Part 2: Sensitivity — spawn probability", f"spawn={sp}")
         arr = np.array(alphas) if alphas else np.array([])
         sensitivity_results[f"spawn_{sp}"] = arr
         if len(arr):
@@ -228,7 +284,7 @@ def run(n_seeds=30, max_nodes=500, mem_bits=8, out_dir=None, progress=None):
 
     growth_alphas = []
     cap_alphas = []
-    for seed in seeds[:min(10, n_seeds)]:
+    for seed in sens_list:
         G_growth, G_final, _, _ = run_antiloop(
             mem_bits=mem_bits, max_nodes=max_nodes, initial_n=10,
             seed=seed, hash_fn=HASH_XOR, pressure_threshold=0.7,
@@ -383,13 +439,13 @@ def run(n_seeds=30, max_nodes=500, mem_bits=8, out_dir=None, progress=None):
         log()
 
         if in_range and frac_preferred > 0.5:
-            log("RESULT: POSITIVE \u2014 Anti-loop constraint produces scale-free-like")
+            log("RESULT: POSITIVE — Anti-loop constraint produces scale-free-like")
             log("degree distributions with alpha in the classic range.")
             if not different:
                 log("WARNING: Control also shows similar alpha. The effect may be")
                 log("driven by the growth process, not the anti-loop constraint.")
         else:
-            log("RESULT: NEGATIVE or INCONCLUSIVE \u2014 Anti-loop constraint does not")
+            log("RESULT: NEGATIVE or INCONCLUSIVE — Anti-loop constraint does not")
             log("reliably produce classic scale-free topology at this scale.")
 
         hash_vals = [sensitivity_results.get(f"hash_{h}", np.array([]))
@@ -403,7 +459,7 @@ def run(n_seeds=30, max_nodes=500, mem_bits=8, out_dir=None, progress=None):
             else:
                 log(f"\nHash function robustness: alpha spread = {spread:.2f} (OK)")
     else:
-        log("INSUFFICIENT DATA \u2014 could not compute verdict.")
+        log("INSUFFICIENT DATA — could not compute verdict.")
 
     log()
 

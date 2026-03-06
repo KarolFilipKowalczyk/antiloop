@@ -1,0 +1,54 @@
+======================================================================
+C1: Consciousness Band — Inter-Node Correlations
+======================================================================
+Measure: mutual information I(A_t; B_t) between neighbor trajectories
+  Anti-loop edges exist because they were needed (to avoid loops).
+  Control edges are random. Anti-loop should carry more MI.
+
+Calibrating...
+  0.43s per run  |  Seeds: 3
+  Nodes: 500  |  Memory: 8-bit (256 configs)
+
+--- Seed 0 ---
+  Anti-loop: edge MI=6.1702+/-0.5095 (500 edges)  non-edge MI=5.4392  (4.5s)
+  Control:   edge MI=6.0758+/-0.1093 (500 edges)  non-edge MI=6.0742  (11.5s)
+  Noise:     edge MI=6.0889  (6.8s)
+
+--- Seed 1 ---
+  Anti-loop: edge MI=6.1767+/-0.5262 (500 edges)  non-edge MI=5.4225  (4.7s)
+  Control:   edge MI=6.0794+/-0.0815 (500 edges)  non-edge MI=6.0804  (11.5s)
+  Noise:     edge MI=6.0751  (6.8s)
+
+--- Seed 2 ---
+  Anti-loop: edge MI=6.1077+/-0.7490 (500 edges)  non-edge MI=5.5010  (4.6s)
+  Control:   edge MI=6.0666+/-0.0829 (500 edges)  non-edge MI=6.0623  (11.5s)
+  Noise:     edge MI=6.0730  (6.9s)
+
+======================================================================
+SUMMARY
+======================================================================
+
+                           Edge MI   Non-edge MI     Ratio
+  --------------------------------------------------------
+             Anti-loop      6.1515        5.4542      1.13x
+               Control      6.0740        6.0723      1.00x
+           Noise (T=1)      6.0790           ---       ---
+
+======================================================================
+VERDICT
+======================================================================
+
+  1. Edges vs non-edges (topology carries information):
+     Anti-loop: 6.1515 vs 5.4542  (YES — 1.1x)
+
+  2. Anti-loop vs control edges (constraint shapes correlations):
+     Anti-loop: 6.1515  Control: 6.0740  diff=2.5 sigma
+     ANTI-LOOP STRONGER
+
+  3. Deterministic vs noise (determinism creates correlations):
+     Deterministic: 6.1515  Noise: 6.0790  (YES)
+
+RESULT: POSITIVE — Anti-loop edges carry more mutual information
+  than control edges. The constraint creates structured correlations
+  that are neither trivial (loops) nor absent (noise).
+  This is the consciousness band: deterministic structure > random topology.

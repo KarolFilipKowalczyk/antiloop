@@ -27,8 +27,14 @@ antiloop/
 │   ├── esej_etyka_pl.md              — accessible essay (Polish)
 │   └── fermi_post_draft.md           — forum post: Fermi paradox dissolution
 ├── simulation/
-│   ├── topology_simulation.py         — scale-free topology test (C3) ✓ POSITIVE
-│   ├── coupling_scaling.py            — coupling constant test ✗ NEGATIVE
+│   ├── engine.py                      — shared core: FSMNode, hash functions, run_antiloop, controls
+│   ├── gui.py                         — ANTILOOP GUI progress window (always on)
+│   ├── run.py                         — unified entry point, auto-discovers experiments
+│   ├── experiments/
+│   │   ├── c1_complexity.py           — C1 consciousness band (inter-node MI) ✓ POSITIVE
+│   │   ├── c3_topology.py             — C3 scale-free topology ✓ POSITIVE (needs proper test)
+│   │   ├── coupling.py                — coupling constant test ✗ NEGATIVE
+│   │   └── o9_spectral.py             — O9 1/f spectral analysis ✗ NEGATIVE (v1, v2 planned)
 │   └── results/                       — plots and raw output
 └── open_problems.md                   — O1–O13, living document
 ```
@@ -108,6 +114,12 @@ One rule: don't collapse another entity's state space. Harm = state-space contra
 - Cap node count to prevent exponential blowup (nodes under loop pressure spawn aggressively)
 - Limit stressed-node actions per step (max 5) to control growth rate
 - Use multiple random seeds (minimum 30 for publishable results)
+
+### Time budget calibration (IMPORTANT)
+Every experiment must respect its `time_budget` parameter. The calibration must measure the **full per-seed pipeline**, not just one component. For example, if a seed involves growth + MI computation + control + analysis, calibrate ALL of those together. A common bug is calibrating only the cheapest step (e.g., graph growth) and underestimating the total by 10-20x. After writing calibration code, verify that the experiment actually finishes within its budget by running with `--quick` and checking wall-clock time.
+
+### GUI rule
+Always run experiments with GUI. The `--nogui` flag has been removed. All experiments display a progress window showing phase, progress bar, and log output. If the system doesn't support GUI (headless, no display), the runner falls back to headless mode automatically. Never add a `--nogui` flag — the fallback handles it.
 
 ### FSM node design
 - Node = (config_space, current_config, visited_set, transition_table)

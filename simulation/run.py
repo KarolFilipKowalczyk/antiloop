@@ -5,15 +5,15 @@ Antiloop Experiment Runner
 Unified entry point for all antiloop experiments.
 
 Usage:
-    python -m simulation.run c3_topology --quick --gui
+    python -m simulation.run c3_topology
     python -m simulation.run coupling --quick
     python -m simulation.run o9_spectral --seeds 5 --time 120
 
 Any .py file in simulation/experiments/ that has a run() function
 and a TITLE string is a valid experiment. No registration needed.
+GUI progress window is always shown (falls back to headless if no display).
 
 Common flags (passed to every experiment, each takes what it needs):
-    --nogui     Disable progress window (GUI is on by default)
     --quick     60s time budget, fewer seeds
     --time N    Override time budget (seconds)
     --seeds N   Number of random seeds
@@ -69,8 +69,6 @@ def main():
     )
     parser.add_argument("experiment", choices=list(experiments.keys()),
                         help="Which experiment to run")
-    parser.add_argument("--nogui", action="store_true",
-                        help="Disable progress window (GUI is on by default)")
     parser.add_argument("--quick", action="store_true",
                         help="Quick test (60s budget, fewer seeds)")
     parser.add_argument("--seeds", type=int, default=None,
@@ -98,12 +96,13 @@ def main():
         "time_budget": args.time or (60 if args.quick else 300),
     }
 
-    if args.nogui:
-        from simulation.gui import run_headless
-        run_headless(exp_mod.run, **kwargs)
-    else:
+    try:
         from simulation.gui import run_with_gui
         run_with_gui(exp_mod.run, title=exp["title"], **kwargs)
+    except Exception:
+        # GUI unavailable (headless system, no display, etc.) — run without it
+        from simulation.gui import run_headless
+        run_headless(exp_mod.run, **kwargs)
 
 
 if __name__ == "__main__":

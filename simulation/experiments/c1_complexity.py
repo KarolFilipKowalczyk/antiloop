@@ -177,23 +177,46 @@ def run(n_seeds=10, max_nodes=200, mem_bits=8, time_budget=300,
     log()
 
     # ----------------------------------------------------------
-    # Calibration
+    # Calibration — time the FULL per-seed pipeline, not just growth
     # ----------------------------------------------------------
-    log("Calibrating...")
+    log("Calibrating (full pipeline: growth + control + MI)...")
+    cal_rng = np.random.default_rng(99999)
+    cal_nodes = min(max_nodes, 100)  # smaller graph for speed
+
     t0 = time.time()
-    run_antiloop(
-        mem_bits=mem_bits, max_nodes=max_nodes, initial_n=10,
+    # 1. Anti-loop growth with trajectories
+    _, G_cal, glog_cal, traj_cal = run_antiloop(
+        mem_bits=mem_bits, max_nodes=cal_nodes, initial_n=10,
         seed=999, hash_fn=HASH_XOR, pressure_threshold=0.7,
         spawn_prob=0.3, record_trajectories=True
     )
-    sec_per_run = time.time() - t0
+    n_steps_cal = max(len(v) for v in traj_cal.values())
+    # 2. MI on anti-loop edges + non-edges
+    edge_mi(G_cal, traj_cal, config_space, rng=cal_rng)
+    nonedge_mi(G_cal, traj_cal, config_space, rng=cal_rng)
+    # 3. Control graph + dynamics + MI
+    G_ctrl_cal = build_growing_random_control(glog_cal, seed=99998)
+    ctrl_traj_cal = run_dynamics_on_graph(G_ctrl_cal, mem_bits, steps=n_steps_cal, seed=99997)
+    edge_mi(G_ctrl_cal, ctrl_traj_cal, config_space, rng=cal_rng)
+    nonedge_mi(G_ctrl_cal, ctrl_traj_cal, config_space, rng=cal_rng)
+    # 4. Noise dynamics + MI
+    noise_traj_cal = run_dynamics_on_graph(G_cal, mem_bits, steps=n_steps_cal, seed=99996, temperature=1.0)
+    edge_mi(G_cal, noise_traj_cal, config_space, rng=cal_rng)
+    sec_per_seed_cal = time.time() - t0
 
-    # Per seed: 1 growth + 1 control dynamics + MI computation
-    available = time_budget * 0.80
-    max_seeds = max(2, int(available / (sec_per_run * 3)))
+    # Scale calibration from cal_nodes to max_nodes.
+    # MI cost ~ O(edges * config_space^2), edges ~ O(nodes), so roughly linear in nodes.
+    # Growth cost ~ O(nodes * steps). Be conservative: scale by (max_nodes/cal_nodes)^1.5
+    scale_factor = (max_nodes / cal_nodes) ** 1.5 if max_nodes > cal_nodes else 1.0
+    sec_per_seed = sec_per_seed_cal * scale_factor
+
+    available = time_budget * 0.85
+    max_seeds = max(2, int(available / sec_per_seed))
     n_seeds = min(n_seeds, max_seeds)
 
-    log(f"  {sec_per_run:.2f}s per run  |  Seeds: {n_seeds}")
+    log(f"  Calibration: {sec_per_seed_cal:.2f}s @ {cal_nodes} nodes → "
+        f"{sec_per_seed:.1f}s estimated @ {max_nodes} nodes")
+    log(f"  Budget: {time_budget}s  |  Seeds: {n_seeds}")
     log(f"  Nodes: {max_nodes}  |  Memory: {mem_bits}-bit ({config_space} configs)")
     log()
 

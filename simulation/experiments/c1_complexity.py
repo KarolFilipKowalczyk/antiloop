@@ -4,7 +4,7 @@ C1 Consciousness Band: Correlations Between Node Trajectories
 
 Tests whether anti-loop graphs produce stronger inter-node correlations
 than control graphs. The "consciousness band" isn't in individual
-trajectories (those look pseudo-random) — it's in the RELATIONSHIPS.
+trajectories (those look pseudo-random) -- it's in the RELATIONSHIPS.
 
 Determinism means same cause -> same effect. If node A affects node B
 via a deterministic transition table, their trajectories are correlated.
@@ -169,7 +169,7 @@ def run(n_seeds=10, max_nodes=200, mem_bits=8, time_budget=300,
             print(msg)
 
     log("=" * 70)
-    log("C1: Consciousness Band — Inter-Node Correlations")
+    log("C1: Consciousness Band -- Inter-Node Correlations")
     log("=" * 70)
     log(f"Measure: mutual information I(A_t; B_t) between neighbor trajectories")
     log(f"  Anti-loop edges exist because they were needed (to avoid loops).")
@@ -177,7 +177,7 @@ def run(n_seeds=10, max_nodes=200, mem_bits=8, time_budget=300,
     log()
 
     # ----------------------------------------------------------
-    # Calibration — time the FULL per-seed pipeline, not just growth
+    # Calibration -- time the FULL per-seed pipeline, not just growth
     # ----------------------------------------------------------
     log("Calibrating (full pipeline: growth + control + MI)...")
     cal_rng = np.random.default_rng(99999)
@@ -205,16 +205,16 @@ def run(n_seeds=10, max_nodes=200, mem_bits=8, time_budget=300,
     sec_per_seed_cal = time.time() - t0
 
     # Scale calibration from cal_nodes to max_nodes.
-    # MI cost ~ O(edges * config_space^2), edges ~ O(nodes), so roughly linear in nodes.
-    # Growth cost ~ O(nodes * steps). Be conservative: scale by (max_nodes/cal_nodes)^1.5
-    scale_factor = (max_nodes / cal_nodes) ** 1.5 if max_nodes > cal_nodes else 1.0
+    # MI cost ~ O(edges * config_space^2), edges ~ O(nodes * avg_degree).
+    # Growth cost ~ O(nodes * steps). Empirically, (500/100) takes ~2x exponent.
+    scale_factor = (max_nodes / cal_nodes) ** 2.0 if max_nodes > cal_nodes else 1.0
     sec_per_seed = sec_per_seed_cal * scale_factor
 
     available = time_budget * 0.85
     max_seeds = max(2, int(available / sec_per_seed))
     n_seeds = min(n_seeds, max_seeds)
 
-    log(f"  Calibration: {sec_per_seed_cal:.2f}s @ {cal_nodes} nodes → "
+    log(f"  Calibration: {sec_per_seed_cal:.2f}s @ {cal_nodes} nodes -> "
         f"{sec_per_seed:.1f}s estimated @ {max_nodes} nodes")
     log(f"  Budget: {time_budget}s  |  Seeds: {n_seeds}")
     log(f"  Nodes: {max_nodes}  |  Memory: {mem_bits}-bit ({config_space} configs)")
@@ -337,7 +337,7 @@ def run(n_seeds=10, max_nodes=200, mem_bits=8, time_budget=300,
 
     log(f"  1. Edges vs non-edges (topology carries information):")
     log(f"     Anti-loop: {al_e.mean():.4f} vs {al_ne.mean():.4f}  "
-        f"({'YES' if edges_matter else 'NO'} — {al_ratio:.1f}x)")
+        f"({'YES' if edges_matter else 'NO'} -- {al_ratio:.1f}x)")
     log()
     log(f"  2. Anti-loop vs control edges (constraint shapes correlations):")
     log(f"     Anti-loop: {al_e.mean():.4f}  Control: {ct_e.mean():.4f}  "
@@ -351,21 +351,21 @@ def run(n_seeds=10, max_nodes=200, mem_bits=8, time_budget=300,
 
     if edges_matter and noise_lower:
         if al_stronger and al_vs_ct_diff > 1.0:
-            log("RESULT: POSITIVE — Anti-loop edges carry more mutual information")
+            log("RESULT: POSITIVE -- Anti-loop edges carry more mutual information")
             log("  than control edges. The constraint creates structured correlations")
             log("  that are neither trivial (loops) nor absent (noise).")
             log("  This is the consciousness band: deterministic structure > random topology.")
         elif al_stronger:
-            log("RESULT: PARTIAL — Anti-loop edges are slightly stronger but not")
+            log("RESULT: PARTIAL -- Anti-loop edges are slightly stronger but not")
             log(f"  significantly so ({al_vs_ct_diff:.1f} sigma). Topology carries")
             log("  information, and determinism creates correlations, but the")
             log("  anti-loop constraint doesn't add much beyond random growth.")
         else:
-            log("RESULT: PARTIAL — Topology and determinism matter, but control")
+            log("RESULT: PARTIAL -- Topology and determinism matter, but control")
             log("  edges are as strong as anti-loop edges. The correlation structure")
             log("  comes from graph dynamics in general, not the anti-loop constraint.")
     else:
-        log("RESULT: NEGATIVE — Cannot confirm the consciousness band via MI.")
+        log("RESULT: NEGATIVE -- Cannot confirm the consciousness band via MI.")
 
     log()
 
@@ -373,7 +373,7 @@ def run(n_seeds=10, max_nodes=200, mem_bits=8, time_budget=300,
     # Plot
     # ----------------------------------------------------------
     fig, axes = plt.subplots(1, 2, figsize=(13, 5))
-    fig.suptitle("C1: Consciousness Band — Inter-Node Mutual Information",
+    fig.suptitle("C1: Consciousness Band -- Inter-Node Mutual Information",
                  fontweight="bold")
 
     # Left: bar chart of edge MI

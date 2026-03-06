@@ -8,24 +8,18 @@ A living document. Updated as problems are resolved or new ones emerge.
 
 **O2 (Status of Assumption N):** Can Assumption N (experience requires novelty) be derived from A1–A3, or is it irreducibly independent? If independent, what alternative assumptions yield interesting frameworks?
 
-**O3 (Formalization of the consciousness band):** The MI ratio ρ = MI(edges)/MI(non-edges) is a candidate measure for the consciousness band. Simulation evidence (30 seeds, 500 nodes, 8-bit FSM): anti-loop ρ = 1.15, control ρ = 1.00, 2.1σ separation, 30/30 seeds consistent. Remaining work:
+**O3 (Formalization of the consciousness band):** The MI ratio ρ = MI(edges)/MI(non-edges) is a candidate measure for the consciousness band. Simulation evidence (30 seeds, 500 nodes, 8-bit FSM): anti-loop ρ = 1.15, control ρ = 1.00, 2.1σ separation, 30/30 seeds consistent. Hash robustness confirmed: XOR=1.14, SUM=1.15, PRODUCT=1.17. Remaining work:
 - Prove ρ = 1 for random graphs analytically
-- Test robustness across hash functions (SUM, PRODUCT) — XOR is commutative and self-inverse, results may be hash-dependent
 - Determine whether ρ is observer-independent
 - Relate to Tononi's Φ formally
 - Measure ρ during growth (does it increase over time? → connection to S1)
 - Per-edge MI vs endpoint degree (does MI concentrate at hubs? → connection to C3)
-- **Status: preliminary simulation evidence POSITIVE (v0.3)**
+- **Status: POSITIVE, hash-robust (v0.3)**
 
 **O4 (T2 refinement):** Characterize the experiential status of a looping observer with no memory of prior cycles. Engage with philosophical literature on personal identity, temporal experience, and the "eternal present" objection.
 
-**O5 (Scale-free conjecture — proper test):**
-- Replace Erdős–Rényi control with growing random graph (matched growth rate, no anti-loop dynamics)
-- Apply Clauset–Shalizi–Newman method for power-law testing
-- Run 30+ seeds per condition for confidence intervals
-- Sensitivity analysis across: loop pressure threshold, spawn probability, hash function, initial topology
-- Separate growth phase from edge-only-at-cap phase
-- **Status: preliminary evidence positive, proper test pending. Growing random control now implemented in engine.py.**
+**O5 (Scale-free conjecture — proper test):** Completed. 30 seeds, 500 nodes, 8-bit FSM, Clauset-Shalizi-Newman method, growing random control. Anti-loop alpha = 2.47 +/- 0.14 (classic range), power law preferred over exponential 30/30. Control alpha = 2.62 +/- 0.27 but exponential fits better. Hash-robust (spread = 0.04). Sensitivity to spawn probability (low spawn -> steeper alpha). Growth phase and cap phase identical.
+- **Status: POSITIVE (v0.3). Caveat: control also in scale-free alpha range, distinction is fit quality.**
 
 **O6 (Force derivation):** Derive at least one quantitative physical law from graph dynamics under anti-loop constraints, even in a toy model.
 
@@ -49,7 +43,8 @@ A living document. Updated as problems are resolved or new ones emerge.
 
 **O15 (C1 temporal evolution):** Does the MI ratio ρ increase during the growth phase? If so, this directly supports S1 (time = complexity growth). Measure ρ at intervals during run_antiloop and plot ρ(t).
 
-**O16 (C2 — suffering as edge loss):** Systematically remove edges from a node. Does MI with remaining neighbors drop? Does loop pressure rise? Does this map onto C2 (suffering = state-space contraction)?
+**O16 (C2 -- suffering as edge loss):** Tested. Progressive edge removal (0-100%) on hub and leaf nodes, 10 seeds, 500 nodes, 8-bit FSM. Partial removal (25-75%): no significant effect -- even one neighbor provides enough input diversity. Total isolation (100%): catastrophic collapse, 87-91% drop in unique configs visited (T1 confirmed). Effect is threshold, not gradient at 8-bit memory. Gradient may emerge at lower memory sizes (see O17).
+- **Status: THRESHOLD POSITIVE (v0.3). Gradual form untested at low memory.**
 
 **O17 (Memory scaling):** Run C1 across mem_bits = 2, 4, 6, 8, 10, 12. At 2 bits, nodes loop in 4 steps (no band possible). At 12 bits, nodes almost never loop (no pressure). The consciousness band should be widest at some intermediate memory size.
 

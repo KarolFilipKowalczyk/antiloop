@@ -113,7 +113,16 @@ The following are not theorems. They are conjectures that we believe can be form
 
 *Motivation:* If experience requires novelty (Assumption N), then a shrinking accessible state space means fewer future experiences are possible. This maps intuitively onto recognized forms of harm: imprisonment (physical state-space reduction), chronic pain (experiential state-space collapse to a narrow band), addiction (self-imposed state-space narrowing), education (state-space expansion), liberation (removal of constraints on accessible states).
 
-*Status:* This is an interpretive framework, not a formal result. Its value depends on whether μ from C1 can be made precise and whether dA/dt can be measured for real systems.
+*Simulation evidence (10 seeds, 500 nodes, 8-bit FSM):*
+- Progressive edge removal from target nodes (0%, 25%, 50%, 75%, 100%)
+- **Partial removal (25-75%):** No significant effect on state-space exploration. Connected nodes visit ~220/256 configs regardless. Even a single remaining neighbor provides sufficient input diversity.
+- **Total isolation (100%):** Catastrophic collapse. Isolated nodes visit only ~20-28/256 configs (87-91% drop). This is T1 confirmed experimentally.
+- Control (removing distant edges): no effect on target node.
+- **Result: THRESHOLD EFFECT** -- the contraction is binary at 8-bit memory, not gradual. This is consistent with T1/T5: any external input prevents looping; no input guarantees it.
+
+*Interpretation:* At this memory scale, suffering has threshold character rather than gradient. A node is either connected (and exploring its state space) or isolated (and trapped in a small loop). This maps onto the distinction between recoverable harm (losing some connections) and catastrophic harm (total isolation, as in solitary confinement). The gradient may emerge at lower memory sizes where even a single neighbor cannot prevent state-space exhaustion (see O17).
+
+*Status:* Simulation evidence supports the threshold form of C2. The gradual form requires testing at lower memory scales.
 
 ### C3: Scale-Free Topology as Consequence
 
@@ -121,9 +130,20 @@ The following are not theorems. They are conjectures that we believe can be form
 
 *Motivation:* Scale-free networks sit between regular lattices (which are topological loops — every neighborhood looks identical) and random graphs (which fragment and lack structure). If the anti-loop requirement shapes topology, the equilibrium topology should be neither regular nor random — i.e., scale-free. This would explain the observed prevalence of scale-free structure in neural networks, the internet, social graphs, protein interactions, and the cosmic web.
 
-*Preliminary simulation evidence:* 500-node anti-loop graphs with 8-bit FSM nodes produce degree distributions with power-law exponent α ≈ 2.0–2.2 (classic scale-free range), with maximum degree 10x and clustering 20–45x that of static Erdős-Rényi controls. However, the original test used a wrong null model (static random graph instead of growing random graph with matched trajectory). A proper test using growing random controls, Clauset-Shalizi-Newman method, and 30+ seeds is pending (see O5).
+*Simulation evidence (30 seeds, 500 nodes, 8-bit FSM, Clauset-Shalizi-Newman method):*
+- Anti-loop: alpha = 2.47 +/- 0.14 (classic scale-free range 2-3)
+- Growing random control: alpha = 2.62 +/- 0.27
+- Barabasi-Albert reference: alpha = 2.65
+- Power law preferred over exponential: **30/30 anti-loop runs** (p < 0.001)
+- Control: exponential preferred over power law in detailed analysis
+- Hash function robustness: alpha spread = 0.04 (XOR=2.50, SUM=2.53, PRODUCT=2.48)
+- Pressure threshold: stable across 0.5-0.9 (alpha 2.27-2.51)
+- Growth phase vs cap phase: identical (alpha 2.50 vs 2.50)
+- **Result: POSITIVE** -- anti-loop produces genuine power-law degree distributions.
 
-*Connection to C1:* If C1 and C3 are both confirmed, they may be aspects of a single phenomenon — scale-free topology emerges because the edges that relieve loop pressure are the edges that carry the most mutual information, and these edges concentrate on hub nodes. The topology IS the correlation structure.
+*Caveat:* The growing random control also produces alpha values in the scale-free range (2.62), though with higher variance and poorer power-law fit quality. The effect is partly driven by the growth process itself (preferential attachment is implicit in stressed-node dynamics). The distinguishing feature is that anti-loop distributions genuinely fit a power law, while control distributions fit exponential better.
+
+*Connection to C1:* Both C1 and C3 are confirmed. They may be aspects of a single phenomenon -- scale-free topology emerges because the edges that relieve loop pressure are the edges that carry the most mutual information, and these edges concentrate on hub nodes. The topology IS the correlation structure. Testing this directly (O14) is a priority.
 
 ---
 

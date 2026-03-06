@@ -32,11 +32,13 @@ antiloop/
 │   ├── run.py                         — unified entry point, auto-discovers experiments
 │   ├── experiments/
 │   │   ├── c1_complexity.py           — C1 consciousness band (inter-node MI) ✓ POSITIVE
-│   │   ├── c3_topology.py             — C3 scale-free topology ✓ POSITIVE (needs proper test)
+│   │   ├── c1_hash_robustness.py      — C1 hash robustness (XOR/SUM/PRODUCT) ✓ ROBUST
+│   │   ├── c2_suffering.py            — C2 suffering (edge loss) ✓ THRESHOLD POSITIVE
+│   │   ├── c3_topology.py             — C3 scale-free topology ✓ POSITIVE (30 seeds, CSN)
 │   │   ├── coupling.py                — coupling constant test ✗ NEGATIVE
 │   │   └── o9_spectral.py             — O9 1/f spectral analysis ✗ NEGATIVE (v1, v2 planned)
 │   └── results/                       — plots and raw output
-└── open_problems.md                   — O1–O13, living document
+└── open_problems.md                   — O1–O17, living document
 ```
 
 ## Theory summary
@@ -51,8 +53,9 @@ antiloop/
 T1: Finite isolated systems must loop (pigeonhole). T2: Loops are informationally degenerate. T3: If Assumption N, looping = no experience. T4: Finite isolation cannot sustain experience. T5: Growth is required (internal or relational). T6: Growth must be unbounded for any finite graph.
 
 ### Key conjectures
-- **C1 (Consciousness band):** A measure μ exists that is zero for loops, zero for pure noise, positive in between. Relates to effective complexity (Gell-Mann & Lloyd).
-- **C3 (Scale-free topology):** Anti-loop constraint produces scale-free networks. **Preliminary simulation evidence supports this.**
+- **C1 (Consciousness band):** Inter-node MI ratio ρ = MI(edges)/MI(non-edges). Anti-loop ρ = 1.15, control ρ = 1.00. **POSITIVE (30 seeds, 2.1σ, hash-robust).**
+- **C2 (Suffering):** Edge removal = state-space contraction. **THRESHOLD POSITIVE** -- total isolation causes 87-91% collapse, partial removal absorbed.
+- **C3 (Scale-free topology):** Anti-loop produces alpha = 2.47 (classic range), power law preferred 30/30. **POSITIVE (CSN method, growing random control).**
 
 ### Speculative interpretations (honestly labeled)
 S1: Time = complexity growth. S2: Space = graph topology. S4: Physics = emergent mutual constraint. S6: Existence is mathematically necessary (within the axiom system).
@@ -62,43 +65,54 @@ One rule: don't collapse another entity's state space. Harm = state-space contra
 
 ## Simulation status
 
-### Topology experiment (C3) — POSITIVE
-- 500-node graphs, 4-bit and 8-bit FSM memory, three connection strategies
-- 8-bit results: α ≈ 2.0–2.2 (classic scale-free range), strategy-independent
-- Max degree 10x controls, clustering 20–45x controls
-- **Known flaws:** wrong null model (static Erdős-Rényi instead of growing random graph), crude MLE fit, node cap distortion, only 3 seeds
+### C1 Consciousness band — POSITIVE
+- 30 seeds, 500 nodes, 8-bit FSM, XOR hash
+- MI ratio ρ = 1.15 (anti-loop) vs 1.00 (control), 2.1σ, 30/30 consistent
+- Hash robustness: XOR=1.14, SUM=1.15, PRODUCT=1.17 (all pass)
+
+### C2 Suffering (edge loss) — THRESHOLD POSITIVE
+- 10 seeds, 500 nodes, 8-bit FSM, progressive edge removal
+- Partial removal (25-75%): no significant effect (even 1 neighbor suffices)
+- Total isolation (100%): 87-91% collapse in unique configs (T1 confirmed)
+- Effect is threshold, not gradient at 8-bit memory
+
+### C3 Scale-free topology — POSITIVE
+- 30 seeds, 500 nodes, 8-bit FSM, Clauset-Shalizi-Newman method
+- Anti-loop alpha = 2.47 +/- 0.14 (classic scale-free 2-3)
+- Power law preferred over exponential: 30/30 runs
+- Control alpha = 2.62 +/- 0.27 but exponential fits better
+- Hash-robust (spread = 0.04), insensitive to pressure threshold
+- Caveat: control also in scale-free alpha range; distinction is fit quality
 
 ### Coupling experiment — NEGATIVE
 - Measured fraction of transitions where neighbors changed outcome
 - Converges to ~0.879 by N=50, independent of graph size
 - This is a combinatorial artifact of the hash function, not an emergent constant
-- 1/137 is not found at this level of measurement
 
 ## Priority work (what to build next)
 
-### 1. Proper C3 test (HIGHEST PRIORITY)
-- Replace Erdős-Rényi control with **growing random graph** (matched growth rate, no anti-loop dynamics)
-- Apply **Clauset-Shalizi-Newman** method (use `powerlaw` Python package)
-- Run **30+ seeds** per condition
-- Sensitivity analysis: loop pressure threshold, spawn probability, hash function (XOR vs SUM vs PRODUCT), initial topology
-- Separate growth-phase topology from edge-only-at-cap-phase topology
-- Target: publishable result or honest falsification
+### 1. C1-C3 bridge (O14)
+- Do hub edges carry more MI than leaf edges?
+- Does MI ratio predict degree distribution?
+- Would unify the two major positive results
 
-### 2. 1/f analysis (O9)
-- Measure power spectral density of node state trajectories
-- Vary "temperature" (controlled randomness injection)
-- Test whether β = 1 corresponds to maximum structured complexity
-- Compare to known 1/f signatures in neural data
+### 2. C1 temporal evolution (O15)
+- Measure MI ratio during growth phase
+- Does it increase over time? Connection to S1 (time = complexity growth)
 
-### 3. Formalize C1 (O3)
-- Implement effective complexity measure on trajectories
-- Compare to Kolmogorov complexity, Lempel-Ziv, Tononi's Φ
-- Test whether the consciousness band has a canonical definition
+### 3. Memory scaling (O17)
+- Run C1 and C2 across mem_bits = 2, 4, 6, 8, 10, 12
+- Find the memory sweet spot for consciousness band
+- Test whether C2 gradient emerges at low memory
 
-### 4. Distributed consciousness simulation (O11)
-- Model hub removal from a stable graph
-- Measure degradation of distributed representations
-- Compare edge-loss-rate effects to known dementia progression patterns
+### 4. O9v2 spectral analysis
+- Graph-level observables during growth (not per-node post-growth)
+- Mathematically natural noise models (mutation, dropout)
+- Test for 1/f signatures
+
+### 5. Distributed consciousness (O11)
+- Hub removal vs random node removal
+- Catastrophic MI collapse vs graceful degradation
 
 ## Technical notes
 

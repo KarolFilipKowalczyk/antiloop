@@ -34,13 +34,19 @@ TITLE = "C3 Scale-Free Topology"
 
 
 def _calibrate(mem_bits, max_nodes):
-    """Time a single run_antiloop call to estimate seconds per run."""
+    """Time the full per-seed pipeline (growth + control + analysis) at target size."""
     t0 = time.time()
-    run_antiloop(
+    # 1. Anti-loop growth
+    _, G, glog, _ = run_antiloop(
         mem_bits=mem_bits, max_nodes=max_nodes, initial_n=10,
         seed=999, hash_fn=HASH_XOR, pressure_threshold=0.7,
         spawn_prob=0.3
     )
+    # 2. Control graph
+    G_ctrl = build_growing_random_control(glog, seed=9998)
+    # 3. Power-law analysis (both)
+    analyze_powerlaw(G, "cal_al")
+    analyze_powerlaw(G_ctrl, "cal_ct")
     return time.time() - t0
 
 

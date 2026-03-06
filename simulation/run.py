@@ -66,6 +66,8 @@ def main():
                         help="Max nodes per graph (default: 500)")
     parser.add_argument("--mem", type=int, default=8,
                         help="FSM memory bits (default: 8)")
+    parser.add_argument("--time", type=int, default=None,
+                        help="Time budget in seconds (default: 60 quick, 300 full)")
 
     args = parser.parse_args()
 
@@ -89,7 +91,7 @@ def main():
         kwargs["n_seeds"] = n_seeds
         kwargs["max_nodes"] = min(args.nodes, 200)
         kwargs["mem_bits"] = args.mem
-        kwargs["max_steps"] = 5000
+        kwargs["time_budget"] = args.time or (60 if args.quick else 300)
 
     if args.gui:
         from simulation.gui import run_with_gui

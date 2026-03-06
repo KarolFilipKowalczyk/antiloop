@@ -271,17 +271,24 @@ def detrend_signal(ts):
 def run_antiloop_with_observables(
     mem_bits, max_nodes, initial_n, seed, hash_fn,
     pressure_threshold, spawn_prob, max_stressed_per_step,
-    max_steps, noise_type="none", noise_rate=0.0
+    max_steps=None, time_budget=None,
+    noise_type="none", noise_rate=0.0
 ):
     """Run anti-loop growth recording graph-level observables.
 
     Reimplements engine.run_antiloop growth logic with:
     - Observable recording at every step
     - Support for mutation and dropout noise
-    - Full max_steps run (growth + post-cap)
+    - Time-budgeted or step-limited run
+
+    Either max_steps or time_budget must be provided.
+    If time_budget is set, runs as many steps as fit in that many seconds.
 
     Returns (G, growth_log, observables_dict).
     """
+    if max_steps is None and time_budget is None:
+        max_steps = 5000
+
     rng = np.random.default_rng(seed)
     G, nodes = init_ring_graph(initial_n, mem_bits, rng)
 
@@ -290,7 +297,15 @@ def run_antiloop_with_observables(
     growth_log.record(0, G.number_of_nodes(), G.number_of_edges())
     recorder = ObservableRecorder()
 
-    for step in range(1, max_steps + 1):
+    t_start = time.time()
+    step_num = 0
+    while True:
+        step_num += 1
+        if max_steps is not None and step_num > max_steps:
+            break
+        if time_budget is not None and step_num > 1:
+            if time.time() - t_start >= time_budget:
+                break
         prev_visited = {nid: len(nodes[nid].visited) for nid in G.nodes()}
 
         # Table mutation noise (before stepping)
@@ -356,7 +371,7 @@ def run_antiloop_with_observables(
         edges_added = G.number_of_edges() - edges_before
 
         recorder.record(G, nodes, prev_visited, edges_added)
-        growth_log.record(step, G.number_of_nodes(), G.number_of_edges())
+        growth_log.record(step_num, G.number_of_nodes(), G.number_of_edges())
 
     return G, growth_log, recorder.to_arrays()
 
@@ -478,9 +493,15 @@ def check_consistency(log, mem_bits, max_nodes, max_steps, seed=42):
 # Main experiment
 # ============================================================
 
-def run(n_seeds=10, max_nodes=200, mem_bits=8, max_steps=5000,
+def run(n_seeds=10, max_nodes=200, mem_bits=8, time_budget=300,
         noise_conditions=None, out_dir=None, progress=None):
-    """Run the O9v2 spectral analysis experiment."""
+    """Run the O9v2 spectral analysis experiment.
+
+    Args:
+        time_budget: total wall-clock seconds for the experiment.
+            The first run calibrates steps/second, then all subsequent
+            runs use the calibrated step count. Default 300s (5 min).
+    """
 
     if noise_conditions is None:
         noise_conditions = NOISE_CONDITIONS
@@ -506,24 +527,56 @@ def run(n_seeds=10, max_nodes=200, mem_bits=8, max_steps=5000,
         else:
             print(msg)
 
+    # ----------------------------------------------------------
+    # Calibration: run one antiloop sim with time budget to find
+    # how many steps we can do per unit of time, then fix step
+    # count for all remaining runs.
+    # ----------------------------------------------------------
+    n_runs = len(noise_conditions) * n_seeds  # antiloop runs (control reuses growth_log length)
+    # Reserve 10% of budget for validation, consistency, plotting
+    sim_budget = time_budget * 0.90
+    # Each "work unit" = 1 antiloop run + 1 control run (~2x time of antiloop alone)
+    time_per_antiloop = sim_budget / (n_runs * 2.0)
+    time_per_antiloop = max(time_per_antiloop, 1.0)  # at least 1 second
+
     log("=" * 70)
     log("O9v2: Graph-Level Spectral Analysis of Anti-Loop Growth")
     log("=" * 70)
-    log(f"Seeds: {n_seeds}  |  Nodes: {max_nodes}  |  Memory: {mem_bits}-bit  |  Steps: {max_steps}")
+    log(f"Seeds: {n_seeds}  |  Nodes: {max_nodes}  |  Memory: {mem_bits}-bit")
+    log(f"Time budget: {time_budget}s  |  Per-run budget: {time_per_antiloop:.1f}s")
     log(f"Noise conditions: {[nc['name'] for nc in noise_conditions]}")
     log(f"Observables: {OBSERVABLE_NAMES}")
     log(f"Device: {device if device else 'CPU (numpy)'}")
     log()
 
+    # Calibration run: time-budgeted first run to discover step count
+    log("Calibrating steps/second...")
+    t_cal = time.time()
+    _, cal_log, _ = run_antiloop_with_observables(
+        mem_bits=mem_bits, max_nodes=max_nodes, initial_n=10,
+        seed=999, hash_fn=HASH_XOR, pressure_threshold=0.7,
+        spawn_prob=0.3, max_stressed_per_step=5,
+        time_budget=time_per_antiloop,
+        noise_type="none", noise_rate=0.0
+    )
+    cal_elapsed = time.time() - t_cal
+    cal_steps = len(cal_log.steps) - 1
+    steps_per_sec = cal_steps / max(cal_elapsed, 0.01)
+    # Use calibrated step count for all runs (consistent across conditions)
+    max_steps = max(100, cal_steps)
+    log(f"  {cal_steps} steps in {cal_elapsed:.1f}s ({steps_per_sec:.0f} steps/s)")
+    log(f"  Using {max_steps} steps for all runs")
+    log()
+
     # ----------------------------------------------------------
     # Validation
     # ----------------------------------------------------------
-    validate_fitting(log, device, n_samples=max_steps)
+    validate_fitting(log, device, n_samples=max(max_steps, 500))
 
     # ----------------------------------------------------------
-    # Consistency check
+    # Consistency check (use small step count to be fast)
     # ----------------------------------------------------------
-    check_consistency(log, mem_bits, max_nodes, max_steps=min(max_steps, 2000))
+    check_consistency(log, mem_bits, max_nodes, max_steps=min(max_steps, 500))
 
     # ----------------------------------------------------------
     # Main sweep: noise_condition x seeds
@@ -553,7 +606,7 @@ def run(n_seeds=10, max_nodes=200, mem_bits=8, max_steps=5000,
             seed = i
             t0 = time.time()
 
-            # Anti-loop run
+            # Anti-loop run (fixed step count from calibration)
             G, growth_log, observables = run_antiloop_with_observables(
                 mem_bits=mem_bits, max_nodes=max_nodes, initial_n=10,
                 seed=seed, hash_fn=HASH_XOR, pressure_threshold=0.7,
@@ -562,7 +615,7 @@ def run(n_seeds=10, max_nodes=200, mem_bits=8, max_steps=5000,
                 noise_type=nc["noise_type"], noise_rate=nc["noise_rate"]
             )
 
-            # Control run
+            # Control run (follows growth_log length)
             ctrl_observables = run_growing_random_with_observables(
                 growth_log, seed=seed + 10000, mem_bits=mem_bits,
                 noise_type=nc["noise_type"], noise_rate=nc["noise_rate"]

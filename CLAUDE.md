@@ -35,6 +35,7 @@ antiloop/
 │   │   ├── c2_suffering.py            — C2 suffering (edge loss) ✓ THRESHOLD POSITIVE
 │   │   ├── c2_targeted_suffering.py   — C2v2 targeted suffering (MI-ranked removal) ✓ POSITIVE (inverted)
 │   │   ├── c3_topology.py             — C3 scale-free topology ✓ POSITIVE (30 seeds, CSN)
+│   │   ├── complexity_thresholds.py   — unified O7+O14+O15: thresholds during growth ⏳ NEW
 │   │   ├── coupling.py                — coupling constant test ✗ NEGATIVE
 │   │   └── o9_spectral.py             — O9 1/f spectral analysis ✗ NEGATIVE (v1, v2 planned)
 │   └── results/                       — plots and raw output
@@ -107,18 +108,28 @@ One rule: don't collapse another entity's state space. Harm = state-space contra
 - Converges to ~0.879 by N=50, independent of graph size
 - This is a combinatorial artifact of the hash function, not an emergent constant
 
+### Complexity Thresholds (O7+O14+O15) — POSITIVE (quick, 2 seeds)
+- Unified experiment: tracks MI ratio, power-law R, degree entropy, clustering, edge MI at 12 checkpoints during anti-loop growth
+- MI measured from actual growth-phase trajectories (not post-hoc dynamics on frozen snapshots)
+- Custom checkpointed growth loop snapshots graph + trajectories at each size threshold
+- Quick-run results (2 seeds, 500 nodes, 8-bit FSM):
+  - MI ratio: 3.5 at N=30, settles to 1.15 at N=500 (anti-loop); flat 1.0 (control)
+  - Consciousness band present from earliest checkpoint — starts HIGH and converges down
+  - Scale-free topology (R > 0) emerges at N ~ 72
+  - Anti-loop: 14 sharp transitions vs control: 10
+  - Final MI ratio: 1.148 vs 1.000, paired t=29.24, p=0.02
+- Key insight: MI ratio doesn't "turn on" — it starts very strong in small dense graphs
+  and settles to a stable band as the graph grows. The "leveling up" is in topology (R)
+  and clustering, not MI ratio.
+- Needs full 30-seed run for publishable results
+
 ## Priority work (what to build next)
 
-### 1. C1-C3 bridge (O14)
-- Do hub edges carry more MI than leaf edges?
-- Does MI ratio predict degree distribution?
-- Would unify the two major positive results
+### 1. Full complexity thresholds run (30 seeds)
+- `python simulation/run.py complexity_thresholds --time 1800`
+- Quick run was positive; need statistical power for publishable results
 
-### 2. C1 temporal evolution (O15)
-- Measure MI ratio during growth phase
-- Does it increase over time? Connection to S1 (time = complexity growth)
-
-### 3. Memory scaling (O17)
+### 2. Memory scaling (O17)
 - Run C1 and C2 across mem_bits = 2, 4, 6, 8, 10, 12
 - Find the memory sweet spot for consciousness band
 - Test whether C2 gradient emerges at low memory

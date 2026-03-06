@@ -23,7 +23,8 @@ A living document. Updated as problems are resolved or new ones emerge.
 
 **O6 (Force derivation):** Derive at least one quantitative physical law from graph dynamics under anti-loop constraints, even in a toy model.
 
-**O7 (Fermi distinguishability):** Identify an observation that would distinguish S5 (complexity threshold) from the standard "life takes time" explanation.
+**O7 (Fermi distinguishability):** Identify an observation that would distinguish S5 (complexity threshold) from the standard "life takes time" explanation. Now addressed by the unified `complexity_thresholds` experiment: if anti-loop networks show sharp phase transitions (discrete thresholds where new structural properties emerge) while random growth shows smooth curves, this distinguishes "substrate leveled up" from "took a long time." Sharp thresholds → starting gun; gradual → life just takes time.
+- **Status: EXPERIMENT WRITTEN, not yet run (`complexity_thresholds.py`)**
 
 **O8 (Energy-resistance relationship):** Formalize the observation that disrupting smaller (lower-M) systems releases disproportionately more energy. Does this follow from the framework?
 
@@ -39,9 +40,11 @@ A living document. Updated as problems are resolved or new ones emerge.
 
 **O13 (Quantum entanglement as minimum connectivity):** Can it be shown that quantum correlations provide an irreducible floor of graph connectivity that prevents full graph fragmentation? What role does decoherence play in edge strength?
 
-**O14 (C1–C3 bridge):** If anti-loop produces both scale-free topology (C3) and topology-specific MI correlations (C1), are these the same phenomenon? Do hub edges carry more MI than leaf edges? Does the MI ratio predict degree distribution? A positive result would unify the two major conjectures.
+**O14 (C1–C3 bridge):** If anti-loop produces both scale-free topology (C3) and topology-specific MI correlations (C1), are these the same phenomenon? Do hub edges carry more MI than leaf edges? Does the MI ratio predict degree distribution? A positive result would unify the two major conjectures. Partially addressed by `complexity_thresholds.py` which tracks both MI ratio and power-law R during growth — if they emerge at the same threshold, they're the same phenomenon.
+- **Status: EXPERIMENT WRITTEN, not yet run (`complexity_thresholds.py`)**
 
-**O15 (C1 temporal evolution):** Does the MI ratio ρ increase during the growth phase? If so, this directly supports S1 (time = complexity growth). Measure ρ at intervals during run_antiloop and plot ρ(t).
+**O15 (C1 temporal evolution):** Does the MI ratio ρ increase during the growth phase? If so, this directly supports S1 (time = complexity growth). Measure ρ at intervals during run_antiloop and plot ρ(t). Directly tested by `complexity_thresholds.py` which measures ρ at 12 checkpoints during growth.
+- **Status: EXPERIMENT WRITTEN, not yet run (`complexity_thresholds.py`)**
 
 **O16 (C2 -- suffering as edge loss):** Tested in two forms.
 - **C2 random removal** (7 seeds, 500 nodes, 8-bit FSM): Progressive edge removal (0-100%) on hub and leaf nodes. Partial removal (25-75%): no significant effect -- even one neighbor provides enough input diversity. Total isolation (100%): catastrophic collapse (55-67% MI drop, 87-91% unique config drop). **Verdict: NEGATIVE for gradient, T1 confirmed at isolation.**

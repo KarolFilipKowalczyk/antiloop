@@ -494,7 +494,7 @@ def check_consistency(log, mem_bits, max_nodes, max_steps, seed=42):
 # ============================================================
 
 def run(n_seeds=10, max_nodes=200, mem_bits=8, time_budget=300,
-        noise_conditions=None, out_dir=None, progress=None):
+        noise_conditions=None, out_dir=None, progress=None, **_):
     """Run the O9v2 spectral analysis experiment.
 
     Args:

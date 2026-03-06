@@ -87,7 +87,7 @@ def measure(num_nodes, mem_bits, avg_degree, seed=42, hash_fn=HASH_XOR,
     return changed / total if total > 0 else 0
 
 
-def run(mem_bits=4, time_budget=60, out_dir=None, progress=None):
+def run(mem_bits=4, time_budget=300, out_dir=None, progress=None, **_):
     """Run the coupling constant experiment.
 
     Args:

@@ -40,7 +40,7 @@ class ProgressWindow:
 
     def __init__(self, title="Antiloop Experiment"):
         self.root = tk.Tk()
-        self.root.title(f"ANTILOPE - {title}")
+        self.root.title(f"ANTILOOP - {title}")
         self.root.geometry("620x400")
         self.root.resizable(True, True)
 

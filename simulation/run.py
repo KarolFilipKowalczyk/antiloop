@@ -5,18 +5,24 @@ Antiloop Experiment Runner
 Unified entry point for all antiloop experiments.
 
 Usage:
-    python -m simulation.run c3 --quick --gui
-    python -m simulation.run coupling
-    python -m simulation.run o9 --quick --gui
-    python -m simulation.run c3 --seeds 30 --nodes 500 --mem 8
+    python -m simulation.run c3_topology --quick --gui
+    python -m simulation.run coupling --quick
+    python -m simulation.run o9_spectral --seeds 5 --time 120
 
-Available experiments:
-    c3        Scale-free topology test (O5)
-    coupling  Coupling constant measurement (negative result)
-    o9        Graph-level spectral analysis (O9v2)
+Any .py file in simulation/experiments/ that has a run() function
+and a TITLE string is a valid experiment. No registration needed.
+
+Common flags (passed to every experiment, each takes what it needs):
+    --gui       Show progress window
+    --quick     60s time budget, fewer seeds
+    --time N    Override time budget (seconds)
+    --seeds N   Number of random seeds
+    --nodes N   Max nodes per graph
+    --mem N     FSM memory bits
 """
 
 import argparse
+import importlib
 import os
 import sys
 
@@ -26,40 +32,47 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 
-EXPERIMENTS = {
-    "c3": {
-        "module": "simulation.experiments.c3_topology",
-        "title": "C3 Scale-Free Topology",
-        "description": "Test whether anti-loop constraint produces scale-free networks (O5)",
-    },
-    "coupling": {
-        "module": "simulation.experiments.coupling",
-        "title": "Coupling Constant",
-        "description": "Measure coupling ratio vs graph size (known negative result)",
-    },
-    "o9": {
-        "module": "simulation.experiments.o9_spectral",
-        "title": "O9v2 Spectral Analysis",
-        "description": "Test 1/f spectrum of graph-level observables (O9v2)",
-    },
-}
+def _discover_experiments():
+    """Find all experiment modules in simulation/experiments/."""
+    exp_dir = os.path.join(os.path.dirname(__file__), "experiments")
+    experiments = {}
+    for fname in sorted(os.listdir(exp_dir)):
+        if not fname.endswith(".py") or fname.startswith("_"):
+            continue
+        name = fname[:-3]  # strip .py
+        module_path = f"simulation.experiments.{name}"
+        try:
+            mod = importlib.import_module(module_path)
+        except Exception:
+            continue
+        if hasattr(mod, "run") and callable(mod.run):
+            title = getattr(mod, "TITLE", name)
+            doc = (mod.__doc__ or "").strip().split("\n")[0]
+            experiments[name] = {
+                "module": mod,
+                "title": title,
+                "description": doc,
+            }
+    return experiments
 
 
 def main():
+    experiments = _discover_experiments()
+
     parser = argparse.ArgumentParser(
         description="Antiloop experiment runner",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="Experiments:\n" + "\n".join(
-            f"  {name:<12} {info['description']}"
-            for name, info in EXPERIMENTS.items()
+            f"  {name:<16} {info['description']}"
+            for name, info in experiments.items()
         ),
     )
-    parser.add_argument("experiment", choices=list(EXPERIMENTS.keys()),
+    parser.add_argument("experiment", choices=list(experiments.keys()),
                         help="Which experiment to run")
     parser.add_argument("--gui", action="store_true",
                         help="Show progress window")
     parser.add_argument("--quick", action="store_true",
-                        help="Quick test with fewer seeds")
+                        help="Quick test (60s budget, fewer seeds)")
     parser.add_argument("--seeds", type=int, default=None,
                         help="Number of random seeds")
     parser.add_argument("--nodes", type=int, default=500,
@@ -71,33 +84,23 @@ def main():
 
     args = parser.parse_args()
 
-    exp_info = EXPERIMENTS[args.experiment]
-    exp_mod = __import__(exp_info["module"], fromlist=["run"])
-
+    exp = experiments[args.experiment]
+    exp_mod = exp["module"]
     out_dir = os.path.join(os.path.dirname(__file__), "results")
 
-    # Build kwargs based on experiment
-    kwargs = {"out_dir": out_dir}
-
-    if args.experiment == "c3":
-        n_seeds = args.seeds or (3 if args.quick else 30)
-        kwargs["n_seeds"] = n_seeds
-        kwargs["max_nodes"] = args.nodes
-        kwargs["mem_bits"] = args.mem
-        kwargs["time_budget"] = args.time or (60 if args.quick else 300)
-    elif args.experiment == "coupling":
-        kwargs["mem_bits"] = args.mem
-        kwargs["time_budget"] = args.time or (30 if args.quick else 120)
-    elif args.experiment == "o9":
-        n_seeds = args.seeds or (3 if args.quick else 10)
-        kwargs["n_seeds"] = n_seeds
-        kwargs["max_nodes"] = min(args.nodes, 200)
-        kwargs["mem_bits"] = args.mem
-        kwargs["time_budget"] = args.time or (60 if args.quick else 300)
+    # Uniform kwargs — every experiment gets the same dict,
+    # each takes what it needs via **_ in its signature.
+    kwargs = {
+        "out_dir": out_dir,
+        "n_seeds": args.seeds or (3 if args.quick else 30),
+        "max_nodes": args.nodes,
+        "mem_bits": args.mem,
+        "time_budget": args.time or (60 if args.quick else 300),
+    }
 
     if args.gui:
         from simulation.gui import run_with_gui
-        run_with_gui(exp_mod.run, title=exp_info["title"], **kwargs)
+        run_with_gui(exp_mod.run, title=exp["title"], **kwargs)
     else:
         from simulation.gui import run_headless
         run_headless(exp_mod.run, **kwargs)

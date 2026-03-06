@@ -45,7 +45,7 @@ def _calibrate(mem_bits, max_nodes):
 
 
 def run(n_seeds=30, max_nodes=500, mem_bits=8, time_budget=300,
-        out_dir=None, progress=None):
+        out_dir=None, progress=None, **_):
     """Run the full C3 experiment.
 
     Args:

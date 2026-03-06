@@ -1,18 +1,18 @@
 ======================================================================
 O9v2: Graph-Level Spectral Analysis of Anti-Loop Growth
 ======================================================================
-Seeds: 3  |  Nodes: 200  |  Memory: 8-bit
+Seeds: 3  |  Nodes: 500  |  Memory: 8-bit
 Time budget: 60s  |  Per-run budget: 1.3s
 Noise conditions: ['none', 'temp_0.1', 'temp_0.5', 'mutation_0.01', 'mutation_0.1', 'dropout_0.1', 'dropout_0.3']
 Observables: ['global_novelty_rate', 'mean_pressure', 'pressure_variance', 'edge_rate', 'degree_entropy']
 Device: cuda
 
 Calibrating steps/second...
-  1219 steps in 1.3s (938 steps/s)
-  Using 1219 steps for all runs
+  946 steps in 1.3s (722 steps/s)
+  Using 946 steps for all runs
 
 Validation: fitting procedure on synthetic signals
-  true beta=0.0  measured=0.00  R^2=0.001  err=0.00  [OK]
+  true beta=0.0  measured=-0.00  R^2=0.006  err=0.00  [OK]
   true beta=0.5  measured=0.50  R^2=1.000  err=0.00  [OK]
   true beta=1.0  measured=1.00  R^2=1.000  err=0.00  [OK]
   true beta=1.5  measured=1.50  R^2=1.000  err=0.00  [OK]
@@ -24,93 +24,93 @@ Consistency check: comparing growth trajectories...
 ----------------------------------------------------------------------
 SWEEP: noise conditions x seeds
 ----------------------------------------------------------------------
-  none: global_n=0.50  mean_pre=2.37  pressure=2.48  edge_rat=0.84  degree_e=2.22
-  temp_0.1: global_n=0.52  mean_pre=2.33  pressure=2.55  edge_rat=0.89  degree_e=2.24
-  temp_0.5: global_n=0.48  mean_pre=2.36  pressure=2.65  edge_rat=0.89  degree_e=2.31
-  mutation_0.01: global_n=0.50  mean_pre=2.31  pressure=2.45  edge_rat=0.82  degree_e=2.23
-  mutation_0.1: global_n=0.54  mean_pre=2.35  pressure=2.44  edge_rat=0.82  degree_e=2.35
-  dropout_0.1: global_n=0.50  mean_pre=2.29  pressure=2.46  edge_rat=0.81  degree_e=2.25
-  dropout_0.3: global_n=0.41  mean_pre=2.34  pressure=2.44  edge_rat=0.88  degree_e=2.33
+  none: global_n=0.54  mean_pre=1.98  pressure=2.49  edge_rat=0.69  degree_e=2.17
+  temp_0.1: global_n=0.56  mean_pre=1.94  pressure=2.54  edge_rat=0.67  degree_e=2.13
+  temp_0.5: global_n=0.54  mean_pre=1.94  pressure=2.66  edge_rat=0.72  degree_e=2.21
+  mutation_0.01: global_n=0.55  mean_pre=1.96  pressure=2.49  edge_rat=0.71  degree_e=2.17
+  mutation_0.1: global_n=0.55  mean_pre=1.97  pressure=2.47  edge_rat=0.70  degree_e=2.26
+  dropout_0.1: global_n=0.57  mean_pre=1.93  pressure=2.49  edge_rat=0.76  degree_e=2.17
+  dropout_0.3: global_n=0.48  mean_pre=1.94  pressure=2.47  edge_rat=0.75  degree_e=2.27
 
-Total time: 84.9s
+Total time: 81.3s
 
 ----------------------------------------------------------------------
 SUMMARY: ANTI-LOOP (detrended)
 ----------------------------------------------------------------------
          Noise  global_novel  mean_pressur  pressure_var     edge_rate  degree_entro
 ------------------------------------------------------------------------------------
-          none   0.50+/-0.07   2.37+/-0.06   2.48+/-0.27   0.84+/-0.09   2.22+/-0.06
-      temp_0.1   0.52+/-0.03   2.33+/-0.12   2.55+/-0.35   0.89+/-0.03   2.24+/-0.08
-      temp_0.5   0.48+/-0.10   2.36+/-0.10   2.65+/-0.24   0.89+/-0.11   2.31+/-0.09
- mutation_0.01   0.50+/-0.06   2.31+/-0.03   2.45+/-0.09   0.82+/-0.06   2.23+/-0.04
-  mutation_0.1   0.54+/-0.07   2.35+/-0.08   2.44+/-0.25   0.82+/-0.06   2.35+/-0.11
-   dropout_0.1   0.50+/-0.08   2.29+/-0.03   2.46+/-0.08   0.81+/-0.04   2.25+/-0.07
-   dropout_0.3   0.41+/-0.04   2.34+/-0.08   2.44+/-0.24   0.88+/-0.11   2.33+/-0.13
+          none   0.54+/-0.07   1.98+/-0.02   2.49+/-0.26   0.69+/-0.02   2.17+/-0.05
+      temp_0.1   0.56+/-0.04   1.94+/-0.01   2.54+/-0.37   0.67+/-0.02   2.13+/-0.06
+      temp_0.5   0.54+/-0.12   1.94+/-0.01   2.66+/-0.25   0.72+/-0.02   2.21+/-0.09
+ mutation_0.01   0.55+/-0.07   1.96+/-0.00   2.49+/-0.13   0.71+/-0.09   2.17+/-0.02
+  mutation_0.1   0.55+/-0.07   1.97+/-0.02   2.47+/-0.24   0.70+/-0.05   2.26+/-0.12
+   dropout_0.1   0.57+/-0.07   1.93+/-0.02   2.49+/-0.12   0.76+/-0.04   2.17+/-0.06
+   dropout_0.3   0.48+/-0.04   1.94+/-0.01   2.47+/-0.30   0.75+/-0.06   2.27+/-0.14
 
 ----------------------------------------------------------------------
 SUMMARY: CONTROL (detrended)
 ----------------------------------------------------------------------
          Noise  global_novel  mean_pressur  pressure_var     edge_rate  degree_entro
 ------------------------------------------------------------------------------------
-          none   0.55+/-0.04   2.36+/-0.07   2.47+/-0.27   0.84+/-0.09   2.24+/-0.05
-      temp_0.1   0.61+/-0.04   2.34+/-0.12   2.55+/-0.35   0.89+/-0.03   2.16+/-0.04
-      temp_0.5   0.46+/-0.07   2.34+/-0.09   2.66+/-0.25   0.89+/-0.11   2.23+/-0.12
- mutation_0.01   0.54+/-0.05   2.30+/-0.03   2.45+/-0.08   0.82+/-0.06   2.32+/-0.04
-  mutation_0.1   0.50+/-0.00   2.34+/-0.07   2.45+/-0.25   0.82+/-0.06   2.27+/-0.03
-   dropout_0.1   0.52+/-0.03   2.29+/-0.04   2.46+/-0.08   0.81+/-0.04   2.36+/-0.11
-   dropout_0.3   0.51+/-0.04   2.33+/-0.09   2.44+/-0.25   0.88+/-0.11   2.23+/-0.01
+          none   0.61+/-0.05   1.97+/-0.02   2.48+/-0.26   0.69+/-0.02   2.08+/-0.02
+      temp_0.1   0.65+/-0.03   1.94+/-0.01   2.54+/-0.37   0.67+/-0.02   2.03+/-0.02
+      temp_0.5   0.52+/-0.06   1.94+/-0.01   2.66+/-0.25   0.72+/-0.02   2.08+/-0.05
+ mutation_0.01   0.59+/-0.06   1.95+/-0.00   2.50+/-0.13   0.71+/-0.09   2.14+/-0.02
+  mutation_0.1   0.56+/-0.01   1.96+/-0.02   2.46+/-0.23   0.70+/-0.05   2.09+/-0.04
+   dropout_0.1   0.57+/-0.03   1.94+/-0.02   2.50+/-0.11   0.76+/-0.04   2.13+/-0.04
+   dropout_0.3   0.58+/-0.03   1.95+/-0.01   2.47+/-0.30   0.75+/-0.06   2.07+/-0.03
 
 ======================================================================
 VERDICT
 ======================================================================
 
   global_novelty_rate:
-              none: antiloop=0.496  control=0.551  diff=0.055
-          temp_0.1: antiloop=0.520  control=0.611  diff=0.091
-          temp_0.5: antiloop=0.479  control=0.459  diff=0.020
-     mutation_0.01: antiloop=0.499  control=0.542  diff=0.043
-      mutation_0.1: antiloop=0.540  control=0.498  diff=0.042
-       dropout_0.1: antiloop=0.500  control=0.522  diff=0.022
-       dropout_0.3: antiloop=0.408  control=0.505  diff=0.097
+              none: antiloop=0.544  control=0.614  diff=0.070
+          temp_0.1: antiloop=0.562  control=0.652  diff=0.090
+          temp_0.5: antiloop=0.539  control=0.522  diff=0.017
+     mutation_0.01: antiloop=0.553  control=0.593  diff=0.041
+      mutation_0.1: antiloop=0.553  control=0.560  diff=0.007
+       dropout_0.1: antiloop=0.565  control=0.575  diff=0.009
+       dropout_0.3: antiloop=0.476  control=0.577  diff=0.102
 
   mean_pressure:
-              none: antiloop=2.373  control=2.365  diff=0.009
-          temp_0.1: antiloop=2.333  control=2.341  diff=0.007
-          temp_0.5: antiloop=2.360  control=2.338  diff=0.023
-     mutation_0.01: antiloop=2.312  control=2.300  diff=0.012
-      mutation_0.1: antiloop=2.349  control=2.342  diff=0.007
-       dropout_0.1: antiloop=2.285  control=2.289  diff=0.004
-       dropout_0.3: antiloop=2.344  control=2.326  diff=0.017
+              none: antiloop=1.976  control=1.972  diff=0.004
+          temp_0.1: antiloop=1.940  control=1.942  diff=0.002
+          temp_0.5: antiloop=1.943  control=1.944  diff=0.001
+     mutation_0.01: antiloop=1.959  control=1.954  diff=0.005
+      mutation_0.1: antiloop=1.969  control=1.963  diff=0.006
+       dropout_0.1: antiloop=1.935  control=1.939  diff=0.004
+       dropout_0.3: antiloop=1.945  control=1.945  diff=0.001
 
   pressure_variance:
-              none: antiloop=2.482  control=2.475  diff=0.007
-          temp_0.1: antiloop=2.551  control=2.551  diff=0.000
-          temp_0.5: antiloop=2.655  control=2.656  diff=0.002
-     mutation_0.01: antiloop=2.450  control=2.453  diff=0.002
-      mutation_0.1: antiloop=2.445  control=2.446  diff=0.002
-       dropout_0.1: antiloop=2.459  control=2.463  diff=0.003
-       dropout_0.3: antiloop=2.444  control=2.442  diff=0.002
+              none: antiloop=2.489  control=2.482  diff=0.007
+          temp_0.1: antiloop=2.537  control=2.535  diff=0.001
+          temp_0.5: antiloop=2.657  control=2.657  diff=0.000
+     mutation_0.01: antiloop=2.488  control=2.497  diff=0.009
+      mutation_0.1: antiloop=2.465  control=2.465  diff=0.000
+       dropout_0.1: antiloop=2.495  control=2.499  diff=0.004
+       dropout_0.3: antiloop=2.473  control=2.470  diff=0.004
 
   edge_rate:
-              none: antiloop=0.837  control=0.837  diff=0.000
-          temp_0.1: antiloop=0.890  control=0.890  diff=0.000
-          temp_0.5: antiloop=0.887  control=0.887  diff=0.000
-     mutation_0.01: antiloop=0.824  control=0.824  diff=0.000
-      mutation_0.1: antiloop=0.820  control=0.820  diff=0.000
-       dropout_0.1: antiloop=0.814  control=0.814  diff=0.000
-       dropout_0.3: antiloop=0.879  control=0.879  diff=0.000
+              none: antiloop=0.693  control=0.693  diff=0.000
+          temp_0.1: antiloop=0.674  control=0.674  diff=0.000
+          temp_0.5: antiloop=0.721  control=0.721  diff=0.000
+     mutation_0.01: antiloop=0.714  control=0.714  diff=0.000
+      mutation_0.1: antiloop=0.697  control=0.697  diff=0.000
+       dropout_0.1: antiloop=0.758  control=0.758  diff=0.000
+       dropout_0.3: antiloop=0.748  control=0.748  diff=0.000
 
   degree_entropy:
-              none: antiloop=2.216  control=2.235  diff=0.019
-          temp_0.1: antiloop=2.238  control=2.163  diff=0.075
-          temp_0.5: antiloop=2.312  control=2.226  diff=0.086
-     mutation_0.01: antiloop=2.227  control=2.315  diff=0.088
-      mutation_0.1: antiloop=2.347  control=2.273  diff=0.075
-       dropout_0.1: antiloop=2.252  control=2.363  diff=0.111
-       dropout_0.3: antiloop=2.330  control=2.234  diff=0.096
+              none: antiloop=2.168  control=2.083  diff=0.085
+          temp_0.1: antiloop=2.126  control=2.026  diff=0.101
+          temp_0.5: antiloop=2.209  control=2.081  diff=0.128
+     mutation_0.01: antiloop=2.170  control=2.137  diff=0.033
+      mutation_0.1: antiloop=2.259  control=2.093  diff=0.166
+       dropout_0.1: antiloop=2.174  control=2.132  diff=0.043
+       dropout_0.3: antiloop=2.266  control=2.067  diff=0.198
 
 RESULT: GROWTH ARTIFACT — Spectrum matches control
   Observable: edge_rate
-  Anti-loop beta: 0.890  Control: 0.890
+  Anti-loop beta: 0.758  Control: 0.758
   Spectral structure present but identical to random growth.
   Not specific to anti-loop dynamics.

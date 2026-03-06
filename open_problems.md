@@ -43,8 +43,10 @@ A living document. Updated as problems are resolved or new ones emerge.
 
 **O15 (C1 temporal evolution):** Does the MI ratio ρ increase during the growth phase? If so, this directly supports S1 (time = complexity growth). Measure ρ at intervals during run_antiloop and plot ρ(t).
 
-**O16 (C2 -- suffering as edge loss):** Tested. Progressive edge removal (0-100%) on hub and leaf nodes, 10 seeds, 500 nodes, 8-bit FSM. Partial removal (25-75%): no significant effect -- even one neighbor provides enough input diversity. Total isolation (100%): catastrophic collapse, 87-91% drop in unique configs visited (T1 confirmed). Effect is threshold, not gradient at 8-bit memory. Gradient may emerge at lower memory sizes (see O17).
-- **Status: THRESHOLD POSITIVE (v0.3). Gradual form untested at low memory.**
+**O16 (C2 -- suffering as edge loss):** Tested in two forms.
+- **C2 random removal** (7 seeds, 500 nodes, 8-bit FSM): Progressive edge removal (0-100%) on hub and leaf nodes. Partial removal (25-75%): no significant effect -- even one neighbor provides enough input diversity. Total isolation (100%): catastrophic collapse (55-67% MI drop, 87-91% unique config drop). **Verdict: NEGATIVE for gradient, T1 confirmed at isolation.**
+- **C2v2 targeted removal** (30 seeds, 500 nodes, 8-bit FSM): Edges ranked by growth-phase MI. Removing low-MI (diverse) edges causes ~6.2% MI loss at 50% removal; removing high-MI (redundant) edges causes ~0% loss. Paired t = -8.61, 27/30 seeds consistent. **Verdict: POSITIVE (inverted) -- edge quality determines suffering, not quantity.**
+- **Status: C2 gradient NEGATIVE. C2v2 targeted POSITIVE. Gradient at low memory untested (see O17).**
 
 **O17 (Memory scaling):** Run C1 across mem_bits = 2, 4, 6, 8, 10, 12. At 2 bits, nodes loop in 4 steps (no band possible). At 12 bits, nodes almost never loop (no pressure). The consciousness band should be widest at some intermediate memory size.
 

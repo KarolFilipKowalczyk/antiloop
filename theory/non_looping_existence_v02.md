@@ -113,16 +113,23 @@ The following are not theorems. They are conjectures that we believe can be form
 
 *Motivation:* If experience requires novelty (Assumption N), then a shrinking accessible state space means fewer future experiences are possible. This maps intuitively onto recognized forms of harm: imprisonment (physical state-space reduction), chronic pain (experiential state-space collapse to a narrow band), addiction (self-imposed state-space narrowing), education (state-space expansion), liberation (removal of constraints on accessible states).
 
-*Simulation evidence (10 seeds, 500 nodes, 8-bit FSM):*
+*Simulation evidence — C2 random removal (7 seeds, 500 nodes, 8-bit FSM):*
 - Progressive edge removal from target nodes (0%, 25%, 50%, 75%, 100%)
-- **Partial removal (25-75%):** No significant effect on state-space exploration. Connected nodes visit ~220/256 configs regardless. Even a single remaining neighbor provides sufficient input diversity.
-- **Total isolation (100%):** Catastrophic collapse. Isolated nodes visit only ~20-28/256 configs (87-91% drop). This is T1 confirmed experimentally.
-- Control (removing distant edges): no effect on target node.
-- **Result: THRESHOLD EFFECT** -- the contraction is binary at 8-bit memory, not gradual. This is consistent with T1/T5: any external input prevents looping; no input guarantees it.
+- **Partial removal (25-75%):** No significant effect on relational MI. Hub MI drops 1.6% at 75% removal; leaf MI drops 0.2%. Per-remaining-edge MI stays flat (~6.2). Even a single remaining neighbor provides sufficient input diversity.
+- **Total isolation (100%):** Catastrophic collapse. Hub MI drops 55%, leaf MI drops 67%. Unique configs drop 87-91%. This is T1 confirmed experimentally.
+- **Result: NEGATIVE for gradient** -- random edge removal does not cause gradual relational contraction. Only total isolation is catastrophic.
 
-*Interpretation:* At this memory scale, suffering has threshold character rather than gradient. A node is either connected (and exploring its state space) or isolated (and trapped in a small loop). This maps onto the distinction between recoverable harm (losing some connections) and catastrophic harm (total isolation, as in solitary confinement). The gradient may emerge at lower memory sizes where even a single neighbor cannot prevent state-space exhaustion (see O17).
+*Simulation evidence — C2v2 targeted removal (30 seeds, 500 nodes, 8-bit FSM):*
+- Edges ranked by mutual information computed from growth-phase trajectories (shared history). High growth-MI = edges between nodes with similar trajectories (redundant). Low growth-MI = edges between nodes with dissimilar trajectories (diverse, novelty-bearing).
+- Growth MI spread: 1.2x–2.0x across seeds (mean 1.6x), confirming edges are not informationally equal.
+- **High-MI removal first:** ~0% MI loss at 50% removal. Redundant connections are expendable.
+- **Low-MI removal first:** ~6.2% MI loss at 50% removal. Diverse connections are load-bearing.
+- Gap: -6.2% of baseline (paired t = -8.61, 27/30 seeds consistent).
+- **Result: POSITIVE (inverted)** -- it is not how many edges you lose but which kind. Removing diverse ties collapses state space more than removing redundant ones.
 
-*Status:* Simulation evidence supports the threshold form of C2. The gradual form requires testing at lower memory scales.
+*Interpretation:* The gradient form of suffering does not emerge from random edge removal at 8-bit memory — any single neighbor suffices. But edge *quality* matters profoundly. Connections that bring novel information (low growth-MI = diverse trajectories) are load-bearing for state-space exploration; connections that echo existing information (high growth-MI = similar trajectories) are expendable. This follows directly from the anti-loop axioms: novelty prevents loops, so novelty-bearing edges are the critical ones. The result bridges C1 (edges carry MI) with C2 (loss = contraction): the quality of a lost edge determines the severity of contraction, not just its existence. The analogy to human suffering is precise: losing what challenges you hurts more than losing what merely echoes you.
+
+*Status:* C2 random removal is negative for gradient, positive only for T1 confirmation at total isolation. C2v2 targeted removal is positive (inverted): edge quality determines suffering. The gradient form at lower memory scales remains untested (see O17).
 
 ### C3: Scale-Free Topology as Consequence
 

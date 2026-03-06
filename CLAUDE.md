@@ -24,7 +24,6 @@ antiloop/
 │   └── complete_evaluation_package.md — theory + simulation + results for review
 ├── essays/
 │   ├── ethics_essay.md                — accessible essay (English)
-│   ├── esej_etyka_pl.md              — accessible essay (Polish)
 │   └── fermi_post_draft.md           — forum post: Fermi paradox dissolution
 ├── simulation/
 │   ├── engine.py                      — shared core: FSMNode, hash functions, run_antiloop, controls
@@ -34,6 +33,7 @@ antiloop/
 │   │   ├── c1_complexity.py           — C1 consciousness band (inter-node MI) ✓ POSITIVE
 │   │   ├── c1_hash_robustness.py      — C1 hash robustness (XOR/SUM/PRODUCT) ✓ ROBUST
 │   │   ├── c2_suffering.py            — C2 suffering (edge loss) ✓ THRESHOLD POSITIVE
+│   │   ├── c2_targeted_suffering.py   — C2v2 targeted suffering (MI-ranked removal) ✓ POSITIVE (inverted)
 │   │   ├── c3_topology.py             — C3 scale-free topology ✓ POSITIVE (30 seeds, CSN)
 │   │   ├── coupling.py                — coupling constant test ✗ NEGATIVE
 │   │   └── o9_spectral.py             — O9 1/f spectral analysis ✗ NEGATIVE (v1, v2 planned)
@@ -54,7 +54,8 @@ T1: Finite isolated systems must loop (pigeonhole). T2: Loops are informationall
 
 ### Key conjectures
 - **C1 (Consciousness band):** Inter-node MI ratio ρ = MI(edges)/MI(non-edges). Anti-loop ρ = 1.15, control ρ = 1.00. **POSITIVE (30 seeds, 2.1σ, hash-robust).**
-- **C2 (Suffering):** Edge removal = state-space contraction. **THRESHOLD POSITIVE** -- total isolation causes 87-91% collapse, partial removal absorbed.
+- **C2 (Suffering):** Random edge removal = no gradual contraction. **NEGATIVE for gradient**, T1 confirmed at total isolation (55-67% MI drop, 87-91% unique config drop).
+- **C2v2 (Targeted suffering):** Removing diverse (low growth-MI) connections hurts more than removing redundant (high growth-MI) ones. **POSITIVE (inverted, 30 seeds, 27/30 consistent, t=-8.61).** Follows from anti-loop logic: novelty-bearing edges are load-bearing.
 - **C3 (Scale-free topology):** Anti-loop produces alpha = 2.47 (classic range), power law preferred 30/30. **POSITIVE (CSN method, growing random control).**
 
 ### Speculative interpretations (honestly labeled)
@@ -70,11 +71,12 @@ One rule: don't collapse another entity's state space. Harm = state-space contra
 - MI ratio ρ = 1.15 (anti-loop) vs 1.00 (control), 2.1σ, 30/30 consistent
 - Hash robustness: XOR=1.14, SUM=1.15, PRODUCT=1.17 (all pass)
 
-### C2 Suffering (edge loss) — THRESHOLD POSITIVE
-- 10 seeds, 500 nodes, 8-bit FSM, progressive edge removal
-- Partial removal (25-75%): no significant effect (even 1 neighbor suffices)
-- Total isolation (100%): 87-91% collapse in unique configs (T1 confirmed)
-- Effect is threshold, not gradient at 8-bit memory
+### C2 Suffering (random edge loss) — NEGATIVE (gradient), T1 CONFIRMED
+- 7 seeds, 500 nodes, 8-bit FSM, progressive edge removal
+- Partial removal (25-75%): no significant effect (1.6% hub MI loss at 75%)
+- Per-remaining-edge MI stays flat (~6.2) — no gradual contraction
+- Total isolation (100%): catastrophic (55-67% MI drop, 87-91% unique config drop)
+- Verdict: NEGATIVE for gradient suffering. T1 confirmed at isolation.
 
 ### C3 Scale-free topology — POSITIVE
 - 30 seeds, 500 nodes, 8-bit FSM, Clauset-Shalizi-Newman method
@@ -83,6 +85,22 @@ One rule: don't collapse another entity's state space. Harm = state-space contra
 - Control alpha = 2.62 +/- 0.27 but exponential fits better
 - Hash-robust (spread = 0.04), insensitive to pressure threshold
 - Caveat: control also in scale-free alpha range; distinction is fit quality
+
+### C2v2 Targeted suffering — POSITIVE (inverted)
+- 30 seeds, 500 nodes, 8-bit FSM, moderate-degree targets (deg ~16)
+- MI ranked from GROWTH-PHASE trajectories (not fresh post-hoc dynamics)
+- Growth MI spread: 1.2-2.0x (mean 1.6x; early edges have more shared history)
+- Key finding: removing LOW growth-MI (diverse) edges hurts MORE
+  - High-MI removal: 98.6 MI at 50% removal (~0% loss)
+  - Low-MI removal: 92.5 MI at 50% removal (6.2% loss)
+  - Gap: -6.2% of baseline, t=-8.61, 27/30 consistent
+- Interpretation: high growth-MI = redundant (similar trajectories, expendable)
+  low growth-MI = diverse (novel information, load-bearing)
+- This follows directly from anti-loop axioms: novelty prevents loops,
+  so connections that bring novel information are the critical ones
+- Previous C2 (random removal) missed this because it treated all edges as equal
+- Bridges C1 (edges carry MI) with C2 (loss = contraction): the QUALITY of lost
+  edge matters, not just the quantity
 
 ### Coupling experiment — NEGATIVE
 - Measured fraction of transitions where neighbors changed outcome
@@ -149,7 +167,6 @@ XOR hash is commutative and self-inverse, meaning neighbor order doesn't matter 
 - This project walks the line between formal mathematics and philosophical speculation. The key discipline is **never confusing the two**.
 - Everything in Part I (T1–T6) must be rigorous. Everything in Part III (S1–S6) must be honestly labeled as speculation. Part II (C1–C3) is the active research frontier.
 - When writing for this project, prefer clarity over impressiveness. A clean negative result is worth more than a hand-wavy positive one.
-- The project has both English and Polish audiences. Karol may work in either language.
 
 ## Key references
 

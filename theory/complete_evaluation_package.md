@@ -113,7 +113,11 @@ We ask you to evaluate: the logical soundness of Part I, the quality of the conj
 
 *Conjecture:* For a node with accessible configuration space A(t) at time t, dA/dt < 0 corresponds to harm/suffering and dA/dt > 0 corresponds to flourishing.
 
-*Status:* Interpretive framework. Value depends on formalizing μ from C1 and measuring dA/dt for real systems.
+*Simulation evidence — C2 random removal (7 seeds, 500 nodes, 8-bit FSM):* Random edge removal does not cause gradual relational contraction. Partial removal (25-75%) has negligible effect (~1.6% MI loss at 75%). Only total isolation causes catastrophic collapse (55-67% MI drop). **Result: NEGATIVE for gradient, T1 confirmed at isolation.**
+
+*Simulation evidence — C2v2 targeted removal (30 seeds, 500 nodes, 8-bit FSM):* When edges are ranked by growth-phase MI, removing low-MI (diverse) edges causes ~6.2% MI loss at 50% removal; removing high-MI (redundant) edges causes ~0% loss. Paired t = -8.61, 27/30 seeds consistent. **Result: POSITIVE (inverted) — edge quality determines suffering, not quantity.** Bridges C1 (edges carry MI) with C2 (loss = contraction).
+
+*Status:* C2 gradient negative. C2v2 targeted positive (inverted). The quality of lost connections matters more than quantity.
 
 ### C3: Scale-Free Topology as Consequence
 
@@ -422,7 +426,7 @@ The consciousness band is not a property of individual trajectories (which are i
 **O8:** Apply Clauset-Shalizi-Newman method to C3 topology data.
 **O14:** C1–C3 bridge — do hub edges carry more MI? Does MI ratio predict degree distribution?
 **O15:** C1 temporal evolution — does ρ increase during growth? (connection to S1)
-**O16:** C2 test — does edge removal reduce MI and increase pressure? (suffering conjecture)
+**O16:** C2 test — random removal NEGATIVE for gradient (T1 confirmed at isolation). C2v2 targeted removal POSITIVE (inverted): diverse edges are load-bearing.
 **O17:** Memory scaling — map the consciousness band width vs memory size.
 
 ---

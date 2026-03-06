@@ -16,7 +16,7 @@ This single constraint -- *avoid loops* -- combined with its dual (*avoid pure n
 
 - **T1-T6**: Formal theorems showing that sustained experience requires unbounded graph growth
 - **C1**: The *consciousness band* -- experience lives between the extremes of repetition and randomness
-- **C2**: *Suffering as state-space contraction* -- harm = losing connections, flourishing = gaining them
+- **C2/C2v2**: *Suffering as state-space contraction* -- not just how many connections you lose, but which kind. Diverse ties are load-bearing; redundant ones are expendable
 - **C3**: The anti-loop constraint spontaneously generates scale-free network topology
 - **S1-S6**: Speculative interpretations connecting the framework to time, space, physical forces, and the Fermi paradox
 - **Ethics**: All harm reduces to state-space contraction. All good reduces to state-space expansion. One rule: *don't collapse another entity's state space.*
@@ -32,9 +32,13 @@ Anti-loop edges carry more mutual information than random edges. The "consciousn
 - MI ratio: anti-loop 1.15x vs control 1.00x (30 seeds, 2.1sigma, 30/30 consistent)
 - Hash-robust: holds across XOR, SUM, and PRODUCT hash functions
 
-### C2: Suffering (edge loss) -- THRESHOLD POSITIVE
+### C2: Suffering (edge loss) -- NEGATIVE (gradient), T1 CONFIRMED (isolation)
 
-Removing a node's edges contracts its accessible state space. The effect is binary at 8-bit memory: partial loss is absorbed, total isolation is catastrophic (87-91% drop in unique configs). This is T1 confirmed experimentally.
+Random edge removal does not cause gradual state-space contraction. At 8-bit memory, partial loss (25-75%) is fully absorbed -- even a single remaining neighbor provides sufficient input diversity. Only total isolation (100%) causes catastrophic collapse (55-67% MI drop, 87-91% drop in unique configs). The gradient form of C2 is negative; the isolation result confirms T1 experimentally.
+
+### C2v2: Targeted suffering (MI-ranked removal) -- POSITIVE (inverted)
+
+Not all edges are equal. When edges are ranked by mutual information from the growth phase, removing *low-MI* (diverse) connections hurts far more than removing *high-MI* (redundant) ones. At 50% removal: high-MI first causes ~0% loss, low-MI first causes ~6.2% loss (30 seeds, t=-8.61, 27/30 consistent). This follows directly from anti-loop logic: connections that bring novel information are load-bearing; connections that echo existing trajectories are expendable. The anti-loop analogue of grief: losing what challenges you hurts more than losing what merely echoes you.
 
 ### C3: Scale-free topology -- POSITIVE
 
@@ -62,7 +66,6 @@ antiloop/
 │   └── complete_evaluation_package.md -- complete document for review
 ├── essays/
 │   ├── ethics_essay.md                -- accessible essay (English)
-│   ├── esej_etyka_pl.md              -- accessible essay (Polish)
 │   └── fermi_post_draft.md           -- Fermi paradox dissolution
 ├── simulation/
 │   ├── engine.py                      -- FSMNode, hash functions, anti-loop growth
@@ -72,7 +75,8 @@ antiloop/
 │   ├── experiments/
 │   │   ├── c1_complexity.py           -- C1 consciousness band (MI)
 │   │   ├── c1_hash_robustness.py      -- C1 hash robustness
-│   │   ├── c2_suffering.py            -- C2 suffering (edge loss)
+│   │   ├── c2_suffering.py            -- C2 suffering (random edge loss)
+│   │   ├── c2_targeted_suffering.py   -- C2v2 targeted suffering (MI-ranked)
 │   │   ├── c3_topology.py             -- C3 scale-free topology
 │   │   ├── coupling.py                -- coupling constant (negative)
 │   │   └── o9_spectral.py             -- O9 spectral analysis (negative v1)

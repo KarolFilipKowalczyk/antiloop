@@ -1,14 +1,19 @@
 """
-O9 Spectral Analysis: 1/f Noise in Anti-Loop Trajectories
-==========================================================
+O9v2 Spectral Analysis: Graph-Level Observables
+=================================================
 
-Tests whether anti-loop node state trajectories exhibit 1/f (pink noise)
-power spectra at intermediate "temperatures" (randomness levels).
+Revised O9 experiment. Tests whether anti-loop growth dynamics produce
+1/f (pink noise) power spectra in graph-level collective observables.
 
-Prediction (from C1 consciousness band):
-  - Temperature 0 (deterministic): periodic/loopy -> steep PSD slope (high beta)
-  - Temperature 1 (pure noise): white noise -> flat PSD (beta ~ 0)
-  - Intermediate temperature: 1/f pink noise (beta ~ 1) = consciousness band
+O9v1 failed because:
+  1. Per-node config values are arbitrary integers (metrically meaningless)
+  2. Analysis was done post-growth on a frozen graph (discarding the interesting dynamics)
+  3. Uniform random noise is too crude
+
+O9v2 fixes:
+  - Measures graph-level observables DURING growth (novelty rate, pressure, edges, entropy)
+  - Uses mathematically natural noise (table mutation, neighbor dropout)
+  - Compares anti-loop to growing random control
 
 Uses GPU (PyTorch CUDA) for batch FFT when available.
 """
@@ -27,15 +32,34 @@ try:
 except ImportError:
     HAS_TORCH = False
 
-from simulation.engine import run_antiloop, FSMNode, compute_hash, HASH_XOR
+from simulation.engine import (
+    FSMNode, compute_hash, init_ring_graph, GrowthLog, HASH_XOR,
+    run_antiloop,
+)
 
-TITLE = "O9 Power Spectral Density"
+TITLE = "O9v2 Spectral Analysis"
 
-DEFAULT_TEMPERATURES = [0.0, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0]
+OBSERVABLE_NAMES = [
+    "global_novelty_rate",
+    "mean_pressure",
+    "pressure_variance",
+    "edge_rate",
+    "degree_entropy",
+]
+
+NOISE_CONDITIONS = [
+    {"name": "none",          "noise_type": "none",        "noise_rate": 0.0},
+    {"name": "temp_0.1",      "noise_type": "temperature", "noise_rate": 0.1},
+    {"name": "temp_0.5",      "noise_type": "temperature", "noise_rate": 0.5},
+    {"name": "mutation_0.01", "noise_type": "mutation",    "noise_rate": 0.01},
+    {"name": "mutation_0.1",  "noise_type": "mutation",    "noise_rate": 0.1},
+    {"name": "dropout_0.1",   "noise_type": "dropout",     "noise_rate": 0.1},
+    {"name": "dropout_0.3",   "noise_type": "dropout",     "noise_rate": 0.3},
+]
 
 
 # ============================================================
-# PSD computation
+# PSD computation (reused from O9v1)
 # ============================================================
 
 def _get_device():
@@ -44,71 +68,48 @@ def _get_device():
     return None
 
 
-def compute_psd_gpu(trajectories_array, device):
-    """Compute average PSD across nodes using GPU FFT.
+def compute_psd_gpu(signal_array, device):
+    """Compute PSD using GPU FFT.
 
     Args:
-        trajectories_array: numpy array (n_nodes, n_steps), float
+        signal_array: numpy array (n_signals, n_steps) or (1, n_steps)
         device: torch.device
-
-    Returns:
-        freqs: frequency bins (numpy)
-        avg_psd: average PSD across nodes (numpy)
     """
-    t = torch.tensor(trajectories_array, dtype=torch.float32, device=device)
-    t = t - t.mean(dim=1, keepdim=True)  # center
+    t = torch.tensor(signal_array, dtype=torch.float32, device=device)
+    t = t - t.mean(dim=1, keepdim=True)
     fft = torch.fft.rfft(t, dim=1)
     psd = (fft.abs() ** 2).cpu().numpy()
     avg_psd = psd.mean(axis=0)
-
-    n_steps = trajectories_array.shape[1]
-    freqs = np.fft.rfftfreq(n_steps)
+    freqs = np.fft.rfftfreq(signal_array.shape[1])
     return freqs, avg_psd
 
 
-def compute_psd_cpu(trajectories_array):
-    """Compute average PSD across nodes using numpy FFT.
-
-    Args:
-        trajectories_array: numpy array (n_nodes, n_steps), float
-
-    Returns:
-        freqs: frequency bins (numpy)
-        avg_psd: average PSD across nodes (numpy)
-    """
-    centered = trajectories_array - trajectories_array.mean(axis=1, keepdims=True)
+def compute_psd_cpu(signal_array):
+    """Compute PSD using numpy FFT."""
+    centered = signal_array - signal_array.mean(axis=1, keepdims=True)
     fft = np.fft.rfft(centered, axis=1)
     psd = np.abs(fft) ** 2
     avg_psd = psd.mean(axis=0)
-
-    n_steps = trajectories_array.shape[1]
-    freqs = np.fft.rfftfreq(n_steps)
+    freqs = np.fft.rfftfreq(signal_array.shape[1])
     return freqs, avg_psd
 
 
-def compute_psd(trajectories_array, device=None):
+def compute_psd(signal_array, device=None):
     """Compute PSD using GPU if available, else CPU."""
     if device is not None:
-        return compute_psd_gpu(trajectories_array, device)
-    return compute_psd_cpu(trajectories_array)
+        return compute_psd_gpu(signal_array, device)
+    return compute_psd_cpu(signal_array)
 
 
 def fit_beta(freqs, psd):
-    """Fit spectral exponent beta from PSD: PSD ~ f^(-beta).
+    """Fit spectral exponent: PSD ~ f^(-beta).
 
-    Fits log(PSD) vs log(f) using linear regression,
-    excluding DC (f=0) and the highest frequencies (noisy).
-
-    Returns:
-        beta: spectral exponent (positive = falling spectrum)
-        r_squared: goodness of fit
+    Returns (beta, r_squared).
     """
-    # Exclude DC component and top 10% of frequencies
     mask = freqs > 0
     f = freqs[mask]
     p = psd[mask]
 
-    # Exclude zero-power bins and top 10%
     n_keep = max(5, int(len(f) * 0.9))
     f = f[:n_keep]
     p = p[:n_keep]
@@ -120,12 +121,9 @@ def fit_beta(freqs, psd):
     log_f = np.log10(f[valid])
     log_p = np.log10(p[valid])
 
-    # Linear regression: log_p = -beta * log_f + const
     coeffs = np.polyfit(log_f, log_p, 1)
-    slope = coeffs[0]
-    beta = -slope  # PSD ~ f^(-beta), so log(PSD) = -beta*log(f) + c
+    beta = -coeffs[0]
 
-    # R-squared
     predicted = np.polyval(coeffs, log_f)
     ss_res = np.sum((log_p - predicted) ** 2)
     ss_tot = np.sum((log_p - log_p.mean()) ** 2)
@@ -135,34 +133,26 @@ def fit_beta(freqs, psd):
 
 
 # ============================================================
-# Validation: synthetic signals with known beta
+# Validation
 # ============================================================
 
 def generate_colored_noise(beta, n_samples, rng):
-    """Generate noise with a specified spectral exponent.
-
-    PSD ~ f^(-beta): beta=0 -> white, beta=1 -> pink, beta=2 -> brown.
-    """
+    """Generate noise with known spectral exponent."""
     freqs = np.fft.rfftfreq(n_samples)
-    freqs[0] = 1.0  # avoid division by zero at DC
-
-    # Shape spectrum
+    freqs[0] = 1.0
     amplitudes = freqs ** (-beta / 2.0)
     phases = rng.uniform(0, 2 * np.pi, size=len(freqs))
     spectrum = amplitudes * np.exp(1j * phases)
-    spectrum[0] = 0  # zero DC
-
-    signal = np.fft.irfft(spectrum, n=n_samples)
-    return signal
+    spectrum[0] = 0
+    return np.fft.irfft(spectrum, n=n_samples)
 
 
-def validate_fitting(log, device, n_samples=2000):
-    """Verify that our beta fitting procedure recovers known exponents."""
+def validate_fitting(log, device, n_samples=5000):
+    """Verify fitting recovers known exponents."""
     log("Validation: fitting procedure on synthetic signals")
     rng = np.random.default_rng(42)
 
     for true_beta in [0.0, 0.5, 1.0, 1.5, 2.0]:
-        # Generate multiple synthetic signals, compute average PSD
         signals = np.array([generate_colored_noise(true_beta, n_samples, rng)
                             for _ in range(100)])
         freqs, avg_psd = compute_psd(signals, device)
@@ -176,100 +166,331 @@ def validate_fitting(log, device, n_samples=2000):
 
 
 # ============================================================
-# Trajectory extraction helpers
+# Noise models
 # ============================================================
 
-def trajectories_to_array(trajectories_dict):
-    """Convert trajectories dict to numpy array (n_nodes, n_steps).
+def apply_table_mutation(nodes, mutation_rate, rng):
+    """Mutate random transition table entries.
 
-    Only includes nodes present for the full trajectory length.
+    For each node, with probability mutation_rate, pick a random
+    (config, input) entry and replace the output with a random value.
+    Structural noise: the rules change, not the state.
     """
-    if not trajectories_dict:
-        return np.array([])
-
-    max_len = max(len(v) for v in trajectories_dict.values())
-    full = {k: v for k, v in trajectories_dict.items() if len(v) == max_len}
-    if not full:
-        return np.array([])
-
-    arr = np.array(list(full.values()), dtype=np.float64)
-    return arr
+    for node in nodes.values():
+        if rng.random() < mutation_rate:
+            row = rng.integers(0, node.config_space)
+            col = rng.integers(0, node.config_space)
+            node.table[row, col] = rng.integers(0, node.config_space)
 
 
-def trajectories_to_novelty(trajectories_dict):
-    """Convert trajectories to novelty signal: 1 = new state, 0 = revisit.
+def compute_hash_with_dropout(nb_configs, hash_fn, dropout_rate, rng):
+    """Compute hash with independent neighbor dropout.
 
-    This captures the recurrence structure that the anti-loop constraint
-    directly shapes. At temperature 0, novelty starts high and drops as
-    config space fills. At temperature 1, novelty is random.
+    Each neighbor is excluded with probability dropout_rate.
+    Topology noise: the node doesn't hear all its neighbors.
     """
-    if not trajectories_dict:
-        return np.array([])
-
-    max_len = max(len(v) for v in trajectories_dict.values())
-    full = {k: v for k, v in trajectories_dict.items() if len(v) == max_len}
-    if not full:
-        return np.array([])
-
-    result = []
-    for configs in full.values():
-        seen = set()
-        novelty = []
-        for c in configs:
-            novelty.append(1.0 if c not in seen else 0.0)
-            seen.add(c)
-        result.append(novelty)
-
-    return np.array(result, dtype=np.float64)
+    if not nb_configs:
+        return 0
+    kept = [c for c in nb_configs if rng.random() >= dropout_rate]
+    if not kept:
+        return 0
+    return compute_hash(kept, hash_fn)
 
 
-def trajectories_to_delta(trajectories_dict):
-    """Convert trajectories to state-change signal: abs(config[t] - config[t-1]).
+# ============================================================
+# Observable recorder
+# ============================================================
 
-    Captures the magnitude of state transitions. Periodic orbits produce
-    periodic delta signals (high beta). Random transitions produce white
-    noise deltas (low beta). Structured exploration should be in between.
+def compute_degree_entropy(G):
+    """Shannon entropy of the degree distribution."""
+    degrees = np.array([d for _, d in G.degree()], dtype=int)
+    if len(degrees) == 0:
+        return 0.0
+    counts = np.bincount(degrees)
+    counts = counts[counts > 0]
+    probs = counts / counts.sum()
+    return -np.sum(probs * np.log2(probs))
+
+
+class ObservableRecorder:
+    """Records graph-level observables at each step."""
+
+    def __init__(self):
+        self.global_novelty_rate = []
+        self.mean_pressure = []
+        self.pressure_variance = []
+        self.edge_rate = []
+        self.degree_entropy = []
+
+    def record(self, G, nodes, prev_visited_counts, edges_added):
+        """Record all observables for this timestep."""
+        n_novel = 0
+        n_total = 0
+        for nid, node in nodes.items():
+            if nid in prev_visited_counts:
+                if len(node.visited) > prev_visited_counts[nid]:
+                    n_novel += 1
+                n_total += 1
+        self.global_novelty_rate.append(n_novel / max(n_total, 1))
+
+        pressures = np.array([node.pressure for node in nodes.values()])
+        self.mean_pressure.append(float(pressures.mean()))
+        self.pressure_variance.append(float(pressures.var()))
+
+        self.edge_rate.append(float(edges_added))
+        self.degree_entropy.append(compute_degree_entropy(G))
+
+    def to_arrays(self):
+        return {
+            "global_novelty_rate": np.array(self.global_novelty_rate),
+            "mean_pressure": np.array(self.mean_pressure),
+            "pressure_variance": np.array(self.pressure_variance),
+            "edge_rate": np.array(self.edge_rate),
+            "degree_entropy": np.array(self.degree_entropy),
+        }
+
+
+# ============================================================
+# Detrending
+# ============================================================
+
+def detrend_signal(ts):
+    """Remove linear trend from time series."""
+    n = len(ts)
+    if n < 3:
+        return ts
+    x = np.arange(n, dtype=float)
+    coeffs = np.polyfit(x, ts, 1)
+    return ts - np.polyval(coeffs, x)
+
+
+# ============================================================
+# Core simulation with observable recording
+# ============================================================
+
+def run_antiloop_with_observables(
+    mem_bits, max_nodes, initial_n, seed, hash_fn,
+    pressure_threshold, spawn_prob, max_stressed_per_step,
+    max_steps, noise_type="none", noise_rate=0.0
+):
+    """Run anti-loop growth recording graph-level observables.
+
+    Reimplements engine.run_antiloop growth logic with:
+    - Observable recording at every step
+    - Support for mutation and dropout noise
+    - Full max_steps run (growth + post-cap)
+
+    Returns (G, growth_log, observables_dict).
     """
-    if not trajectories_dict:
-        return np.array([])
+    rng = np.random.default_rng(seed)
+    G, nodes = init_ring_graph(initial_n, mem_bits, rng)
 
-    max_len = max(len(v) for v in trajectories_dict.values())
-    full = {k: v for k, v in trajectories_dict.items() if len(v) == max_len}
-    if not full:
-        return np.array([])
+    next_id = initial_n
+    growth_log = GrowthLog()
+    growth_log.record(0, G.number_of_nodes(), G.number_of_edges())
+    recorder = ObservableRecorder()
 
-    result = []
-    for configs in full.values():
-        arr = np.array(configs, dtype=np.float64)
-        delta = np.abs(np.diff(arr))
-        result.append(delta)
+    for step in range(1, max_steps + 1):
+        prev_visited = {nid: len(nodes[nid].visited) for nid in G.nodes()}
 
-    return np.array(result, dtype=np.float64)
+        # Table mutation noise (before stepping)
+        if noise_type == "mutation" and noise_rate > 0:
+            apply_table_mutation(nodes, noise_rate, rng)
+
+        # All nodes step
+        node_list = list(G.nodes())
+        for nid in node_list:
+            nb_configs = [nodes[n].config for n in G.neighbors(nid)]
+
+            if noise_type == "dropout" and noise_rate > 0:
+                h = compute_hash_with_dropout(
+                    nb_configs, hash_fn, noise_rate, rng
+                ) % nodes[nid].config_space
+                new_config = nodes[nid].table[nodes[nid].config, h]
+                nodes[nid].config = new_config
+                nodes[nid].visited.add(new_config)
+            elif noise_type == "temperature" and noise_rate > 0:
+                nodes[nid].step(nb_configs, hash_fn,
+                                temperature=noise_rate, rng=rng)
+            else:
+                nodes[nid].step(nb_configs, hash_fn)
+
+        # Growth logic (matches engine.run_antiloop)
+        edges_before = G.number_of_edges()
+
+        stressed = [n for n in node_list if nodes[n].pressure > pressure_threshold]
+        if stressed:
+            acted = rng.choice(
+                stressed,
+                size=min(max_stressed_per_step, len(stressed)),
+                replace=False
+            )
+            at_cap = G.number_of_nodes() >= max_nodes
+
+            for nid in acted:
+                current_nb = set(G.neighbors(nid)) | {nid}
+                candidates = [n for n in G.nodes() if n not in current_nb]
+
+                if candidates:
+                    target = rng.choice(candidates)
+                    G.add_edge(nid, target)
+
+                    if not at_cap and rng.random() < spawn_prob:
+                        if G.number_of_nodes() < max_nodes:
+                            G.add_node(next_id)
+                            nodes[next_id] = FSMNode(mem_bits, rng)
+                            G.add_edge(nid, next_id)
+                            prev_visited[next_id] = 0
+                            next_id += 1
+                            if G.number_of_nodes() >= max_nodes:
+                                at_cap = True
+                elif not at_cap:
+                    G.add_node(next_id)
+                    nodes[next_id] = FSMNode(mem_bits, rng)
+                    G.add_edge(nid, next_id)
+                    prev_visited[next_id] = 0
+                    next_id += 1
+                    if G.number_of_nodes() >= max_nodes:
+                        at_cap = True
+
+        edges_added = G.number_of_edges() - edges_before
+
+        recorder.record(G, nodes, prev_visited, edges_added)
+        growth_log.record(step, G.number_of_nodes(), G.number_of_edges())
+
+    return G, growth_log, recorder.to_arrays()
+
+
+# ============================================================
+# Control: growing random graph with observables
+# ============================================================
+
+def run_growing_random_with_observables(
+    growth_log, seed, mem_bits, hash_fn=HASH_XOR,
+    noise_type="none", noise_rate=0.0
+):
+    """Growing random graph with matched trajectory, collecting observables.
+
+    Same node/edge counts as anti-loop at each step, but edges attach
+    randomly. FSM nodes run on the topology for comparable measurement.
+    """
+    rng = np.random.default_rng(seed)
+
+    initial_n = growth_log.nodes[0]
+    G, nodes = init_ring_graph(initial_n, mem_bits, rng)
+    next_id = initial_n
+    recorder = ObservableRecorder()
+    n_steps = len(growth_log.steps) - 1
+
+    for t in range(1, n_steps + 1):
+        prev_visited = {nid: len(nodes[nid].visited) for nid in G.nodes()}
+
+        if noise_type == "mutation" and noise_rate > 0:
+            apply_table_mutation(nodes, noise_rate, rng)
+
+        node_list = list(G.nodes())
+        for nid in node_list:
+            nb_configs = [nodes[n].config for n in G.neighbors(nid)]
+            if noise_type == "dropout" and noise_rate > 0:
+                h = compute_hash_with_dropout(
+                    nb_configs, hash_fn, noise_rate, rng
+                ) % nodes[nid].config_space
+                new_config = nodes[nid].table[nodes[nid].config, h]
+                nodes[nid].config = new_config
+                nodes[nid].visited.add(new_config)
+            elif noise_type == "temperature" and noise_rate > 0:
+                nodes[nid].step(nb_configs, hash_fn,
+                                temperature=noise_rate, rng=rng)
+            else:
+                nodes[nid].step(nb_configs, hash_fn)
+
+        # Match growth trajectory randomly
+        edges_before = G.number_of_edges()
+
+        if t < len(growth_log.nodes):
+            target_nodes = growth_log.nodes[t]
+            target_edges = growth_log.edges[t]
+
+            while G.number_of_nodes() < target_nodes:
+                G.add_node(next_id)
+                nodes[next_id] = FSMNode(mem_bits, rng)
+                if G.number_of_nodes() > 1:
+                    target_node = rng.choice(list(G.nodes()))
+                    G.add_edge(next_id, target_node)
+                prev_visited[next_id] = 0
+                next_id += 1
+
+            attempts = 0
+            while G.number_of_edges() < target_edges and attempts < 500:
+                attempts += 1
+                nl = list(G.nodes())
+                u = rng.choice(nl)
+                v = rng.choice(nl)
+                if u != v and not G.has_edge(u, v):
+                    G.add_edge(u, v)
+
+        edges_added = G.number_of_edges() - edges_before
+        recorder.record(G, nodes, prev_visited, edges_added)
+
+    return recorder.to_arrays()
+
+
+# ============================================================
+# Consistency check
+# ============================================================
+
+def check_consistency(log, mem_bits, max_nodes, max_steps, seed=42):
+    """Verify growth matches engine.run_antiloop with same parameters."""
+    log("Consistency check: comparing growth trajectories...")
+
+    _, _, engine_log, _ = run_antiloop(
+        mem_bits=mem_bits, max_nodes=max_nodes, initial_n=10,
+        seed=seed, hash_fn=HASH_XOR, pressure_threshold=0.7,
+        spawn_prob=0.3, max_stressed_per_step=5,
+        max_steps=max_steps, record_trajectories=False, temperature=0.0
+    )
+
+    _, our_log, _ = run_antiloop_with_observables(
+        mem_bits=mem_bits, max_nodes=max_nodes, initial_n=10,
+        seed=seed, hash_fn=HASH_XOR, pressure_threshold=0.7,
+        spawn_prob=0.3, max_stressed_per_step=5,
+        max_steps=max_steps, noise_type="none", noise_rate=0.0
+    )
+
+    # Compare growth logs (truncate to shorter)
+    n = min(len(engine_log.nodes), len(our_log.nodes))
+    nodes_match = engine_log.nodes[:n] == our_log.nodes[:n]
+    edges_match = engine_log.edges[:n] == our_log.edges[:n]
+
+    if nodes_match and edges_match:
+        log(f"  PASS: growth trajectories match ({n} steps)")
+    else:
+        # Find first divergence
+        for i in range(n):
+            if engine_log.nodes[i] != our_log.nodes[i] or engine_log.edges[i] != our_log.edges[i]:
+                log(f"  FAIL: diverged at step {i}: engine=({engine_log.nodes[i]},{engine_log.edges[i]}) "
+                    f"vs ours=({our_log.nodes[i]},{our_log.edges[i]})")
+                break
+    log()
 
 
 # ============================================================
 # Main experiment
 # ============================================================
 
-def run(n_seeds=10, max_nodes=200, mem_bits=8, n_steps=2000,
-        temperatures=None, out_dir=None, progress=None):
-    """Run the O9 spectral analysis experiment.
+def run(n_seeds=10, max_nodes=200, mem_bits=8, max_steps=5000,
+        noise_conditions=None, out_dir=None, progress=None):
+    """Run the O9v2 spectral analysis experiment."""
 
-    Grows anti-loop graphs, then runs them at various temperatures
-    while recording trajectories. Computes PSD and fits spectral
-    exponent beta at each temperature.
-    """
-
-    if temperatures is None:
-        temperatures = DEFAULT_TEMPERATURES
+    if noise_conditions is None:
+        noise_conditions = NOISE_CONDITIONS
     if out_dir is None:
         out_dir = os.path.join(os.path.dirname(__file__), "..", "results")
     os.makedirs(out_dir, exist_ok=True)
 
     output_lines = []
-    total_work = len(temperatures) * n_seeds
+    total_work = len(noise_conditions) * n_seeds
     work_done = 0
-
     device = _get_device()
 
     def step(phase, status):
@@ -286,260 +507,351 @@ def run(n_seeds=10, max_nodes=200, mem_bits=8, n_steps=2000,
             print(msg)
 
     log("=" * 70)
-    log("O9: Power Spectral Density of Anti-Loop Trajectories")
+    log("O9v2: Graph-Level Spectral Analysis of Anti-Loop Growth")
     log("=" * 70)
-    log(f"Seeds: {n_seeds}  |  Nodes: {max_nodes}  |  Memory: {mem_bits}-bit  |  Steps: {n_steps}")
-    log(f"Temperatures: {temperatures}")
+    log(f"Seeds: {n_seeds}  |  Nodes: {max_nodes}  |  Memory: {mem_bits}-bit  |  Steps: {max_steps}")
+    log(f"Noise conditions: {[nc['name'] for nc in noise_conditions]}")
+    log(f"Observables: {OBSERVABLE_NAMES}")
     log(f"Device: {device if device else 'CPU (numpy)'}")
     log()
 
     # ----------------------------------------------------------
     # Validation
     # ----------------------------------------------------------
-    validate_fitting(log, device, n_samples=n_steps)
+    validate_fitting(log, device, n_samples=max_steps)
 
     # ----------------------------------------------------------
-    # Main sweep: temperature x seeds
-    # Three signal types tested:
-    #   raw:     config value (integer state)
-    #   delta:   |config[t] - config[t-1]| (transition magnitude)
-    #   novelty: 1 if new state, 0 if revisit (recurrence structure)
+    # Consistency check
+    # ----------------------------------------------------------
+    check_consistency(log, mem_bits, max_nodes, max_steps=min(max_steps, 2000))
+
+    # ----------------------------------------------------------
+    # Main sweep: noise_condition x seeds
     # ----------------------------------------------------------
     log("-" * 70)
-    log("TEMPERATURE SWEEP")
+    log("SWEEP: noise conditions x seeds")
     log("-" * 70)
 
-    signal_types = ["raw", "delta", "novelty"]
-    # results[signal_type][temp] = list of (beta, r_sq)
-    results = {s: {t: [] for t in temperatures} for s in signal_types}
-    example_psds = {}  # for plotting: {temp: (freqs, psd, beta)} using best signal
+    # results[noise_name][obs_name] = list of (beta, r_sq) across seeds
+    # detrended_results[...] = same but with linear detrending
+    results = {nc["name"]: {obs: [] for obs in OBSERVABLE_NAMES}
+               for nc in noise_conditions}
+    detrended_results = {nc["name"]: {obs: [] for obs in OBSERVABLE_NAMES}
+                         for nc in noise_conditions}
+    ctrl_results = {nc["name"]: {obs: [] for obs in OBSERVABLE_NAMES}
+                    for nc in noise_conditions}
+    ctrl_detrended = {nc["name"]: {obs: [] for obs in OBSERVABLE_NAMES}
+                      for nc in noise_conditions}
 
-    seeds = list(range(n_seeds))
+    example_timeseries = None
+    example_psds = {}
     t0_total = time.time()
 
-    for temp in temperatures:
-        for i, seed in enumerate(seeds):
+    for nc in noise_conditions:
+        nc_name = nc["name"]
+        for i in range(n_seeds):
+            seed = i
             t0 = time.time()
 
-            # Phase 1: grow the graph (deterministic, no recording)
-            _, G_final, _, _ = run_antiloop(
+            # Anti-loop run
+            G, growth_log, observables = run_antiloop_with_observables(
                 mem_bits=mem_bits, max_nodes=max_nodes, initial_n=10,
                 seed=seed, hash_fn=HASH_XOR, pressure_threshold=0.7,
-                spawn_prob=0.3, max_steps=10000,
-                record_trajectories=False, temperature=0.0
+                spawn_prob=0.3, max_stressed_per_step=5,
+                max_steps=max_steps,
+                noise_type=nc["noise_type"], noise_rate=nc["noise_rate"]
             )
 
-            # Phase 2: run the grown graph at temperature, recording trajectories
-            rng = np.random.default_rng(seed + 50000)
-            nodes = {nid: FSMNode(mem_bits, rng) for nid in G_final.nodes()}
-            node_list = list(G_final.nodes())
-            trajectories = {nid: [nodes[nid].config] for nid in node_list}
+            # Control run
+            ctrl_observables = run_growing_random_with_observables(
+                growth_log, seed=seed + 10000, mem_bits=mem_bits,
+                noise_type=nc["noise_type"], noise_rate=nc["noise_rate"]
+            )
 
-            for _ in range(n_steps):
-                for nid in node_list:
-                    nb = [nodes[n].config for n in G_final.neighbors(nid)]
-                    nodes[nid].step(nb, HASH_XOR, temperature=temp, rng=rng)
-                for nid in node_list:
-                    trajectories[nid].append(nodes[nid].config)
-
-            # Analyze all three signal types
-            arrays = {
-                "raw": trajectories_to_array(trajectories),
-                "delta": trajectories_to_delta(trajectories),
-                "novelty": trajectories_to_novelty(trajectories),
-            }
-
-            betas_this = {}
-            for sig_type in signal_types:
-                arr = arrays[sig_type]
-                if arr.size == 0 or arr.shape[1] < 10:
+            # Compute PSD for each observable
+            for obs_name in OBSERVABLE_NAMES:
+                ts = observables[obs_name]
+                if len(ts) < 50:
                     continue
+
+                arr = ts.reshape(1, -1).astype(np.float64)
+
+                # Raw PSD
                 freqs, avg_psd = compute_psd(arr, device)
                 beta, r_sq = fit_beta(freqs, avg_psd)
-                results[sig_type][temp].append((beta, r_sq))
-                betas_this[sig_type] = beta
+                results[nc_name][obs_name].append((beta, r_sq))
 
-                if i == 0 and sig_type == "delta":
-                    example_psds[temp] = (freqs, avg_psd, beta)
+                # Detrended PSD
+                dt_arr = detrend_signal(ts).reshape(1, -1)
+                dt_freqs, dt_psd = compute_psd(dt_arr, device)
+                dt_beta, dt_r_sq = fit_beta(dt_freqs, dt_psd)
+                detrended_results[nc_name][obs_name].append((dt_beta, dt_r_sq))
+
+                # Control
+                ctrl_ts = ctrl_observables.get(obs_name)
+                if ctrl_ts is not None and len(ctrl_ts) >= 50:
+                    min_len = min(len(ts), len(ctrl_ts))
+                    c_arr = ctrl_ts[:min_len].reshape(1, -1).astype(np.float64)
+                    c_freqs, c_psd = compute_psd(c_arr, device)
+                    c_beta, c_r_sq = fit_beta(c_freqs, c_psd)
+                    ctrl_results[nc_name][obs_name].append((c_beta, c_r_sq))
+
+                    c_dt_arr = detrend_signal(ctrl_ts[:min_len]).reshape(1, -1)
+                    c_dt_freqs, c_dt_psd = compute_psd(c_dt_arr, device)
+                    c_dt_beta, c_dt_r_sq = fit_beta(c_dt_freqs, c_dt_psd)
+                    ctrl_detrended[nc_name][obs_name].append((c_dt_beta, c_dt_r_sq))
+
+                    # Save example data for plotting
+                    if nc_name == "none" and i == 0:
+                        example_psds[obs_name] = {
+                            "antiloop": (freqs, avg_psd, beta),
+                            "control": (c_freqs, c_psd, c_beta),
+                        }
+
+            # Save example timeseries (no-noise, seed 0)
+            if nc_name == "none" and i == 0:
+                example_timeseries = observables
 
             elapsed = time.time() - t0
-            beta_strs = "  ".join(f"{s}={betas_this.get(s, 0):.2f}" for s in signal_types)
-            step(f"Temperature {temp:.2f}",
-                 f"seed {i+1}/{n_seeds}  |  {beta_strs}  ({elapsed:.1f}s)")
+            step(f"Noise: {nc_name}",
+                 f"seed {i+1}/{n_seeds} ({elapsed:.1f}s)")
 
-        # Summary for this temperature
+        # Per-condition summary line
         parts = []
-        for sig_type in signal_types:
-            betas = [b for b, _ in results[sig_type][temp]]
+        for obs_name in OBSERVABLE_NAMES:
+            betas = [b for b, _ in detrended_results[nc_name][obs_name]]
             if betas:
-                b_arr = np.array(betas)
-                parts.append(f"{sig_type}={b_arr.mean():.3f}+/-{b_arr.std():.3f}")
-        log(f"  temp={temp:.2f}:  {'  '.join(parts)}")
+                parts.append(f"{obs_name[:8]}={np.mean(betas):.2f}")
+        log(f"  {nc_name}: " + "  ".join(parts))
 
     total_time = time.time() - t0_total
     log(f"\nTotal time: {total_time:.1f}s")
     log()
 
     # ----------------------------------------------------------
-    # Summary table (per signal type)
+    # Summary tables
     # ----------------------------------------------------------
-    # Collect means/stds for the best signal type (most structure)
-    summary = {}  # signal_type -> {temps, means, stds}
-
-    for sig_type in signal_types:
+    for label, res in [("ANTI-LOOP (detrended)", detrended_results),
+                       ("CONTROL (detrended)", ctrl_detrended)]:
         log("-" * 70)
-        log(f"SUMMARY: {sig_type} signal")
+        log(f"SUMMARY: {label}")
         log("-" * 70)
-        log(f"{'Temperature':>12} {'beta_mean':>10} {'beta_std':>10} {'R^2_mean':>10}")
-        log("-" * 45)
 
-        means, stds, valid = [], [], []
-        for temp in temperatures:
-            betas = [b for b, _ in results[sig_type][temp]]
-            r_sqs = [r for _, r in results[sig_type][temp]]
-            if betas:
-                b_mean = np.mean(betas)
-                b_std = np.std(betas)
-                r_mean = np.mean(r_sqs)
-                log(f"{temp:>12.2f} {b_mean:>10.3f} {b_std:>10.3f} {r_mean:>10.3f}")
-                means.append(b_mean)
-                stds.append(b_std)
-                valid.append(temp)
+        # Header
+        header = f"{'Noise':>14}"
+        for obs in OBSERVABLE_NAMES:
+            header += f"  {obs[:12]:>12}"
+        log(header)
+        log("-" * (14 + 14 * len(OBSERVABLE_NAMES)))
 
-        summary[sig_type] = {"temps": valid, "means": means, "stds": stds}
+        for nc in noise_conditions:
+            row = f"{nc['name']:>14}"
+            for obs in OBSERVABLE_NAMES:
+                betas = [b for b, _ in res[nc["name"]][obs]]
+                if betas:
+                    row += f"  {np.mean(betas):>5.2f}+/-{np.std(betas):.2f}"
+                else:
+                    row += f"  {'N/A':>12}"
+            log(row)
         log()
 
     # ----------------------------------------------------------
     # Plots
     # ----------------------------------------------------------
 
-    # Plot 1: Beta vs temperature for all signal types
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    fig.suptitle("O9: Spectral Exponent vs Temperature", fontweight="bold")
+    # Plot 1: Beta by observable (grouped bars, anti-loop vs control)
+    fig, axes = plt.subplots(len(OBSERVABLE_NAMES), 1, figsize=(12, 3 * len(OBSERVABLE_NAMES)),
+                             sharex=True)
+    fig.suptitle("O9v2: Spectral Exponent by Observable and Noise Condition",
+                 fontweight="bold", fontsize=13)
 
-    colors_sig = {"raw": "tab:gray", "delta": "tab:blue", "novelty": "tab:green"}
-    for sig_type in signal_types:
-        s = summary[sig_type]
-        if s["temps"]:
-            ax.errorbar(s["temps"], s["means"], yerr=s["stds"], fmt="o-",
-                        capsize=5, color=colors_sig[sig_type], linewidth=2,
-                        markersize=6, label=f"{sig_type} signal")
+    nc_names = [nc["name"] for nc in noise_conditions]
+    x = np.arange(len(nc_names))
+    bar_width = 0.35
 
-    ax.axhline(y=1.0, color="tab:red", linestyle="--", alpha=0.7,
-               label="beta = 1 (1/f pink noise)")
-    ax.axhline(y=0.0, color="black", linestyle=":", alpha=0.3,
-               label="beta = 0 (white noise)")
-    ax.set_xlabel("Temperature (randomness)")
-    ax.set_ylabel("Spectral exponent beta")
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-    ax.set_xlim(-0.05, 1.05)
+    for idx, obs in enumerate(OBSERVABLE_NAMES):
+        ax = axes[idx]
 
+        # Anti-loop betas
+        al_means = []
+        al_stds = []
+        for nc_name in nc_names:
+            betas = [b for b, _ in detrended_results[nc_name][obs]]
+            al_means.append(np.mean(betas) if betas else 0)
+            al_stds.append(np.std(betas) if betas else 0)
+
+        # Control betas
+        ct_means = []
+        ct_stds = []
+        for nc_name in nc_names:
+            betas = [b for b, _ in ctrl_detrended[nc_name][obs]]
+            ct_means.append(np.mean(betas) if betas else 0)
+            ct_stds.append(np.std(betas) if betas else 0)
+
+        ax.bar(x - bar_width / 2, al_means, bar_width, yerr=al_stds,
+               color="tab:blue", alpha=0.8, capsize=3, label="Anti-loop")
+        ax.bar(x + bar_width / 2, ct_means, bar_width, yerr=ct_stds,
+               color="tab:gray", alpha=0.6, capsize=3, label="Control")
+
+        ax.axhline(y=1.0, color="tab:red", linestyle="--", alpha=0.5)
+        ax.axhline(y=0.0, color="black", linestyle=":", alpha=0.3)
+        ax.set_ylabel("beta")
+        ax.set_title(obs, fontsize=10)
+        ax.grid(True, alpha=0.2)
+        if idx == 0:
+            ax.legend(fontsize=8)
+
+    axes[-1].set_xticks(x)
+    axes[-1].set_xticklabels(nc_names, rotation=45, ha="right", fontsize=9)
     plt.tight_layout()
-    plt.savefig(os.path.join(out_dir, "o9_beta_vs_temperature.png"),
+    plt.savefig(os.path.join(out_dir, "o9v2_beta_by_observable.png"),
                 dpi=150, bbox_inches="tight")
     plt.close()
 
-    # Plot 2: Example PSDs (delta signal) at different temperatures
-    fig, ax = plt.subplots(1, 1, figsize=(8, 5))
-    fig.suptitle("O9: Power Spectral Density (delta signal) at Different Temperatures",
-                 fontweight="bold")
+    # Plot 2: Example time series (no-noise, seed 0)
+    if example_timeseries is not None:
+        fig, axes = plt.subplots(len(OBSERVABLE_NAMES), 1,
+                                 figsize=(12, 2.5 * len(OBSERVABLE_NAMES)),
+                                 sharex=True)
+        fig.suptitle("O9v2: Observable Time Series (no noise, seed 0)",
+                     fontweight="bold", fontsize=13)
 
+        for idx, obs in enumerate(OBSERVABLE_NAMES):
+            ax = axes[idx]
+            ts = example_timeseries[obs]
+            ax.plot(ts, linewidth=0.5, color="tab:blue", alpha=0.8)
+            ax.set_ylabel(obs[:15], fontsize=9)
+            ax.grid(True, alpha=0.2)
+
+        axes[-1].set_xlabel("Step")
+        plt.tight_layout()
+        plt.savefig(os.path.join(out_dir, "o9v2_example_timeseries.png"),
+                    dpi=150, bbox_inches="tight")
+        plt.close()
+
+    # Plot 3: PSD comparison (most interesting observable)
     if example_psds:
-        colors = plt.cm.coolwarm(np.linspace(0, 1, len(example_psds)))
-        for (temp, (freqs, psd, beta)), color in zip(sorted(example_psds.items()), colors):
-            mask = freqs > 0
-            ax.loglog(freqs[mask], psd[mask], "-", alpha=0.8, color=color,
-                      label=f"T={temp:.2f} (beta={beta:.2f})")
+        # Pick observable with beta closest to 1
+        best_obs = None
+        best_dist = float("inf")
+        for obs, data in example_psds.items():
+            dist = abs(data["antiloop"][2] - 1.0)
+            if dist < best_dist:
+                best_dist = dist
+                best_obs = obs
 
-    ax.set_xlabel("Frequency")
-    ax.set_ylabel("Power Spectral Density")
-    ax.legend(fontsize=8)
-    ax.grid(True, alpha=0.3, which="both")
+        if best_obs:
+            fig, ax = plt.subplots(1, 1, figsize=(8, 5))
+            al_data = example_psds[best_obs]["antiloop"]
+            ct_data = example_psds[best_obs]["control"]
 
-    plt.tight_layout()
-    plt.savefig(os.path.join(out_dir, "o9_example_psds.png"),
-                dpi=150, bbox_inches="tight")
-    plt.close()
+            mask_al = al_data[0] > 0
+            mask_ct = ct_data[0] > 0
+
+            ax.loglog(al_data[0][mask_al], al_data[1][mask_al], "-",
+                      color="tab:blue", alpha=0.8, linewidth=1.5,
+                      label=f"Anti-loop (beta={al_data[2]:.2f})")
+            ax.loglog(ct_data[0][mask_ct], ct_data[1][mask_ct], "-",
+                      color="tab:gray", alpha=0.6, linewidth=1.5,
+                      label=f"Control (beta={ct_data[2]:.2f})")
+
+            # Reference slopes
+            f_ref = np.logspace(-3, -0.5, 50)
+            for ref_beta, ls, lbl in [(0, ":", "white"), (1, "--", "1/f"), (2, "-.", "1/f^2")]:
+                scale = al_data[1][mask_al][len(al_data[1][mask_al]) // 4]
+                f_mid = al_data[0][mask_al][len(al_data[0][mask_al]) // 4]
+                ref_psd = scale * (f_ref / f_mid) ** (-ref_beta)
+                ax.loglog(f_ref, ref_psd, ls, color="tab:red", alpha=0.3,
+                          label=f"beta={ref_beta} ({lbl})")
+
+            ax.set_xlabel("Frequency")
+            ax.set_ylabel("Power Spectral Density")
+            ax.set_title(f"O9v2: PSD Comparison — {best_obs}", fontweight="bold")
+            ax.legend(fontsize=8)
+            ax.grid(True, alpha=0.2, which="both")
+
+            plt.tight_layout()
+            plt.savefig(os.path.join(out_dir, "o9v2_psd_comparison.png"),
+                        dpi=150, bbox_inches="tight")
+            plt.close()
 
     # ----------------------------------------------------------
-    # Verdict (use signal type with most variation in beta)
+    # Verdict
     # ----------------------------------------------------------
     log("=" * 70)
     log("VERDICT")
     log("=" * 70)
 
-    # Pick signal type with largest beta range across temperatures
-    best_sig = None
-    best_range = 0
-    for sig_type in signal_types:
-        s = summary[sig_type]
-        if len(s["means"]) >= 3:
-            r = max(s["means"]) - min(s["means"])
-            log(f"  {sig_type}: beta range = [{min(s['means']):.3f}, {max(s['means']):.3f}]  "
-                f"(spread = {r:.3f})")
-            if r > best_range:
-                best_range = r
-                best_sig = sig_type
+    best_finding = None
+    best_score = -1  # higher = more interesting
+
+    for obs in OBSERVABLE_NAMES:
+        log(f"\n  {obs}:")
+        for nc in noise_conditions:
+            nc_name = nc["name"]
+            al_betas = [b for b, _ in detrended_results[nc_name][obs]]
+            ct_betas = [b for b, _ in ctrl_detrended[nc_name][obs]]
+
+            if not al_betas:
+                continue
+
+            al_mean = np.mean(al_betas)
+            ct_mean = np.mean(ct_betas) if ct_betas else 0
+            diff = abs(al_mean - ct_mean)
+
+            log(f"    {nc_name:>14}: antiloop={al_mean:.3f}  control={ct_mean:.3f}  "
+                f"diff={diff:.3f}")
+
+            # Score: how close to beta=1 AND how different from control
+            dist_to_one = abs(al_mean - 1.0)
+            score = diff - dist_to_one  # high diff, low dist_to_one = good
+
+            if score > best_score:
+                best_score = score
+                best_finding = {
+                    "obs": obs, "noise": nc_name,
+                    "al_beta": al_mean, "ct_beta": ct_mean, "diff": diff,
+                }
 
     log()
 
-    if best_sig:
-        s = summary[best_sig]
-        means_arr = np.array(s["means"])
-        temps_arr = np.array(s["temps"])
+    if best_finding:
+        bf = best_finding
+        al_beta = bf["al_beta"]
+        diff = bf["diff"]
 
-        log(f"Best signal type: {best_sig} (largest spectral variation)")
-        log()
-
-        # Find temperature closest to beta=1
-        dist_to_one = np.abs(means_arr - 1.0)
-        best_idx = np.argmin(dist_to_one)
-        best_temp = temps_arr[best_idx]
-        best_beta = means_arr[best_idx]
-
-        log(f"Closest to beta=1:  T={best_temp:.2f}  beta={best_beta:.3f}")
-        log()
-
-        # Check for monotonic trend
-        is_decreasing = all(means_arr[i] >= means_arr[i+1] - 0.1
-                           for i in range(len(means_arr) - 1))
-
-        at_extreme = best_idx == 0 or best_idx == len(means_arr) - 1
-        crosses_one = means_arr[0] > 1.0 and means_arr[-1] < 1.0
-
-        if crosses_one and not at_extreme:
-            log("RESULT: POSITIVE — Beta crosses 1.0 at intermediate temperature.")
-            log(f"1/f (pink noise) emerges at T ~ {best_temp:.2f}, between")
-            log("deterministic order and pure randomness.")
-            log("This is consistent with the C1 consciousness band prediction.")
-        elif crosses_one:
-            log("RESULT: PARTIAL — Beta crosses 1.0 but at boundary temperature.")
-            log("The trend is consistent with C1 but the crossing point")
-            log("needs finer temperature resolution to confirm.")
-        elif is_decreasing and best_range > 0.3:
-            log("RESULT: MONOTONIC — Beta decreases with temperature.")
-            log(f"Range: [{means_arr[-1]:.2f}, {means_arr[0]:.2f}]")
-            if means_arr[0] < 1.0:
-                log("Beta is always below 1.0 — trajectories lack long-range")
-                log("temporal correlations at this scale.")
-            else:
-                log("Beta is always above 1.0 — trajectories are more ordered")
-                log("than 1/f at all temperatures tested.")
-        elif best_range < 0.05:
-            log("RESULT: NEGATIVE — No spectral structure detected.")
-            log("Beta is flat across temperatures. The anti-loop constraint")
-            log("does not produce measurable spectral signatures at this scale.")
+        if 0.7 <= al_beta <= 1.3 and diff > 0.3:
+            log(f"RESULT: POSITIVE — 1/f spectrum detected!")
+            log(f"  Observable: {bf['obs']}")
+            log(f"  Noise condition: {bf['noise']}")
+            log(f"  Anti-loop beta: {al_beta:.3f}  (target: 1.0)")
+            log(f"  Control beta: {bf['ct_beta']:.3f}")
+            log(f"  Difference: {diff:.3f}")
+            log("  Anti-loop growth produces structured temporal correlations")
+            log("  consistent with 1/f noise, distinct from random growth control.")
+        elif al_beta > 0.3 and diff > 0.3:
+            log(f"RESULT: PARTIAL — Structured spectrum but not 1/f")
+            log(f"  Observable: {bf['obs']}")
+            log(f"  Anti-loop beta: {al_beta:.3f}  Control: {bf['ct_beta']:.3f}")
+            log(f"  Spectral structure present and different from control,")
+            log(f"  but beta not near 1.0.")
+        elif al_beta > 0.3 and diff <= 0.3:
+            log(f"RESULT: GROWTH ARTIFACT — Spectrum matches control")
+            log(f"  Observable: {bf['obs']}")
+            log(f"  Anti-loop beta: {al_beta:.3f}  Control: {bf['ct_beta']:.3f}")
+            log(f"  Spectral structure present but identical to random growth.")
+            log(f"  Not specific to anti-loop dynamics.")
         else:
-            log("RESULT: INCONCLUSIVE — Some variation in beta but no clear")
-            log("monotonic trend or 1/f crossing point.")
-    else:
-        log("INSUFFICIENT DATA — could not compute verdict.")
+            log("RESULT: NEGATIVE — No spectral structure detected.")
+            log(f"  Best observable: {bf['obs']}")
+            log(f"  Anti-loop beta: {al_beta:.3f}  Control: {bf['ct_beta']:.3f}")
+            log("  Graph-level observables do not exhibit structured spectral")
+            log("  signatures at this scale.")
 
     log()
 
     # Save text results
-    with open(os.path.join(out_dir, "o9_results.txt"), "w", encoding="utf-8") as f:
+    with open(os.path.join(out_dir, "o9v2_results.txt"), "w", encoding="utf-8") as f:
         f.write("\n".join(output_lines))
 
     log(f"Results saved to {out_dir}/")

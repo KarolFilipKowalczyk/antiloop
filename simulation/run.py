@@ -13,7 +13,7 @@ Usage:
 Available experiments:
     c3        Scale-free topology test (O5)
     coupling  Coupling constant measurement (negative result)
-    o9        1/f spectral analysis (O9)
+    o9        Graph-level spectral analysis (O9v2)
 """
 
 import argparse
@@ -39,8 +39,8 @@ EXPERIMENTS = {
     },
     "o9": {
         "module": "simulation.experiments.o9_spectral",
-        "title": "O9 Spectral Analysis",
-        "description": "Test 1/f spectrum at different temperatures (O9)",
+        "title": "O9v2 Spectral Analysis",
+        "description": "Test 1/f spectrum of graph-level observables (O9v2)",
     },
 }
 
@@ -89,6 +89,7 @@ def main():
         kwargs["n_seeds"] = n_seeds
         kwargs["max_nodes"] = min(args.nodes, 200)
         kwargs["mem_bits"] = args.mem
+        kwargs["max_steps"] = 5000
 
     if args.gui:
         from simulation.gui import run_with_gui

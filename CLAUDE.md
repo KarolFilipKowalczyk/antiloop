@@ -24,7 +24,7 @@ antiloop/
 │   └── complete_evaluation_package.md — theory + simulation + results for review
 ├── essays/
 │   ├── ethics_essay.md                — accessible essay (English)
-│   └── fermi_post_draft.md           — forum post: Fermi paradox dissolution
+│   └── fermi_essay.md                — Fermi paradox dissolution + simulation evidence
 ├── simulation/
 │   ├── engine.py                      — shared core: FSMNode, hash functions, run_antiloop, controls
 │   ├── gui.py                         — ANTILOOP GUI progress window (always on)

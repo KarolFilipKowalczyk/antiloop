@@ -15,6 +15,8 @@ But what if the premise is wrong?
 
 There is an alternative that requires no filter, no forest, and no zoo. What if the universe doesn't run on a fixed ruleset? What if the computational substrate of reality — whatever it is that determines what structures are possible — grows in complexity over time?
 
+This isn't even speculative at the coarse level. Cosmic history already demonstrates that the universe does not begin with full structural capability. Stable atoms didn't exist until recombination, roughly 380,000 years after the Big Bang. Gravitational structures capable of nuclear fusion didn't ignite until around 100 million years. Heavy elements — carbon, oxygen, iron — required generations of stellar nucleosynthesis. Rocky planets with stable chemistry required all of the above. Each stage had to wait for the universe to accumulate sufficient structure before the next level became dynamically possible.
+
 Start with a minimal kernel. A handful of particles, a few forces, simple interaction rules. Enough to run, but not enough to support anything we'd recognize as chemistry. Over billions of years, the system expands. Not just in spatial extent, but in computational depth. New interactions become possible. Stable atoms become possible. Then molecules. Then organic chemistry. Then self-replication. Not because the ingredients finally found each other after an eternity of random shuffling — but because the rules themselves didn't support that level of organized complexity until the substrate was ready.
 
 Think of it like a game that patches itself. You can't build endgame content during the tutorial. Not because you're bad at the game, but because the mechanics literally don't exist yet.
@@ -43,7 +45,9 @@ I want to be honest about what this argument does and does not establish.
 
 It does not prove that the laws of physics change over time. It offers a framework in which *effective* complexity grows — meaning the range of possible structures increases — without requiring the fundamental constants to shift. The strong force doesn't need to change for the universe to become more complex. It's more like: early in the universe's history, the graph of interacting entities was small and simple enough that certain higher-order structures (like stable chemistry, like self-replicating molecules) were not yet achievable, even though the fundamental rules already permitted them in principle. The same way a chess game permits checkmate from move one in principle, but the actual board state doesn't support it until many moves have been played.
 
-It also does not, yet, distinguish itself from a simpler hypothesis: that complex life takes a long time to evolve, and we happen to be early. Both hypotheses predict the same observation — no ancient civilizations, lots of young ones. The distinguishing prediction would be this: if the complexity-threshold hypothesis is right, then certain physical or chemical processes relevant to the origin of life were not just unlikely in the early universe but *impossible* — not because of temperature or elemental abundance, but because the underlying computational structure hadn't yet reached the required depth. If we found evidence that some process essential to abiogenesis requires conditions that only became available in the last few billion years — conditions beyond the usual astrophysical ones — that would favor this hypothesis over the simpler "life just takes time."
+If you want a more precise formulation: let C(t) represent the universe's capacity for nested causal processes at cosmic time t, and let I* represent the minimum causal depth required for technological intelligence. The claim is that C(t) grows monotonically, and that intelligence becomes possible only when C(t) reaches I*. Before that threshold, minds are not merely unlikely but dynamically unsupported — the way checkmate is dynamically unsupported on move one of a chess game. The earliest possible emergence of civilizations occurs at t_I = inf{t : C(t) >= I*}. If t_I was recent in cosmic terms, everyone starts at roughly the same time.
+
+This framing also does not, yet, distinguish itself from a simpler hypothesis: that complex life takes a long time to evolve, and we happen to be early. Both hypotheses predict the same observation — no ancient civilizations, lots of young ones. The distinguishing prediction would be this: if the complexity-threshold hypothesis is right, then certain physical or chemical processes relevant to the origin of life were not just unlikely in the early universe but *impossible* — not because of temperature or elemental abundance, but because the underlying computational structure hadn't yet reached the required depth. If we found evidence that some process essential to abiogenesis requires conditions that only became available in the last few billion years — conditions beyond the usual astrophysical ones — that would favor this hypothesis over the simpler "life just takes time."
 
 We don't have that evidence yet. This is speculation, clearly labeled.
 
@@ -58,6 +62,16 @@ The consciousness band — the ratio of mutual information carried by edges vers
 Anti-loop networks show more sharp transitions (14 across all metrics) than matched random controls (10), consistent with the prediction that constraint-driven growth produces discrete complexity levels rather than smooth scaling. A growing random graph — same number of nodes and edges at each step, but without the anti-loop constraint — shows gentler, more gradual property changes.
 
 This is preliminary (2 seeds in quick mode; a full 30-seed run is needed for statistical confidence), and it's a toy model, not a cosmological simulation. But the qualitative prediction holds: anti-loop growth produces discrete structural thresholds. The game patches itself.
+
+## What would change our minds
+
+Clear falsification criteria matter. The hypothesis would be weakened if:
+
+- Evidence of extremely ancient technological civilizations were discovered — anything predating the epoch when heavy-element enrichment and stable planetary systems became widespread.
+- Intelligence appeared easily on very old planetary systems with no apparent structural barrier.
+- Toy models consistently showed no threshold emergence when causal depth increases — if anti-loop growth produced smooth scaling indistinguishable from random growth, the "leveling up" claim would lose its foundation.
+
+The hypothesis could be strengthened empirically by constructing cosmological proxies for C(t) — the universe's causal depth capacity — using observable quantities: heavy-element abundance over cosmic time, rocky planet formation rate, star longevity distributions, diversity of stable chemical environments. If these proxies show threshold behavior aligned with the epoch when planetary biospheres became possible, the complexity-threshold explanation gains ground over the simpler "life just takes time."
 
 ## The connection to ethics
 

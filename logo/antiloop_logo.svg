@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+  <defs>
+    <linearGradient id="trailGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:0.1"/>
+      <stop offset="30%" style="stop-color:#16213e;stop-opacity:0.4"/>
+      <stop offset="60%" style="stop-color:#0f3460;stop-opacity:0.7"/>
+      <stop offset="100%" style="stop-color:#e94560;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e94560"/>
+      <stop offset="100%" style="stop-color:#c23152"/>
+    </linearGradient>
+    <linearGradient id="hornGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e94560"/>
+      <stop offset="100%" style="stop-color:#f5c6a5"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="400" fill="#0a0a1a"/>
+  
+  <!-- Non-crossing trail behind the antelope - a path that never loops -->
+  <path d="M 30 280 
+           C 60 260, 80 300, 110 270 
+           C 140 240, 130 200, 160 220 
+           C 190 240, 200 190, 230 210 
+           C 260 230, 250 170, 280 185 
+           C 310 200, 320 160, 350 175 
+           C 380 190, 370 150, 400 158
+           C 430 166, 440 140, 460 148"
+        fill="none" 
+        stroke="url(#trailGrad)" 
+        stroke-width="3" 
+        stroke-linecap="round"
+        stroke-dasharray="1 6"
+        opacity="0.8"/>
+
+  <!-- Trail - solid closer to animal -->
+  <path d="M 400 158 
+           C 430 166, 445 142, 460 148
+           C 480 156, 490 135, 510 140"
+        fill="none" 
+        stroke="#e94560" 
+        stroke-width="2.5" 
+        stroke-linecap="round"
+        opacity="0.6"/>
+
+  <!-- ANTELOPE - minimalist geometric style -->
+  <g transform="translate(490, 85)">
+    <!-- Back leg (rear) -->
+    <line x1="30" y1="95" x2="15" y2="155" stroke="#c23152" stroke-width="5" stroke-linecap="round"/>
+    <line x1="50" y1="90" x2="40" y2="155" stroke="#c23152" stroke-width="5" stroke-linecap="round"/>
+    
+    <!-- Body - elegant elongated ellipse -->
+    <ellipse cx="75" cy="75" rx="65" ry="30" fill="url(#bodyGrad)" transform="rotate(-8, 75, 75)"/>
+    
+    <!-- Front legs (in running pose) -->
+    <line x1="110" y1="85" x2="135" y2="145" stroke="#e94560" stroke-width="5" stroke-linecap="round"/>
+    <line x1="120" y1="80" x2="150" y2="130" stroke="#e94560" stroke-width="5" stroke-linecap="round"/>
+    
+    <!-- Hooves - small marks -->
+    <circle cx="15" cy="157" r="3" fill="#f5c6a5"/>
+    <circle cx="40" cy="157" r="3" fill="#f5c6a5"/>
+    <circle cx="135" cy="147" r="3" fill="#f5c6a5"/>
+    <circle cx="150" cy="132" r="3" fill="#f5c6a5"/>
+    
+    <!-- Neck -->
+    <path d="M 120 60 C 130 45, 140 35, 148 20" fill="none" stroke="url(#bodyGrad)" stroke-width="14" stroke-linecap="round"/>
+    
+    <!-- Head -->
+    <ellipse cx="155" cy="15" rx="20" ry="12" fill="#e94560" transform="rotate(-15, 155, 15)"/>
+    
+    <!-- Eye -->
+    <circle cx="162" cy="11" r="3" fill="#0a0a1a"/>
+    <circle cx="163" cy="10" r="1" fill="#ffffff" opacity="0.8"/>
+    
+    <!-- Horns - elegant curved, reaching upward like escaping a loop -->
+    <path d="M 148 8 C 140 -15, 155 -35, 170 -50" fill="none" stroke="url(#hornGrad)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 152 5 C 148 -12, 165 -28, 185 -38" fill="none" stroke="url(#hornGrad)" stroke-width="3.5" stroke-linecap="round"/>
+    
+    <!-- Tail - flick of energy -->
+    <path d="M 15 65 C -5 55, -15 45, -10 30" fill="none" stroke="#e94560" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Small nodes along the trail - representing graph nodes -->
+  <circle cx="60" cy="275" r="2" fill="#16213e" opacity="0.3"/>
+  <circle cx="115" cy="265" r="2" fill="#16213e" opacity="0.4"/>
+  <circle cx="165" cy="222" r="2.5" fill="#0f3460" opacity="0.5"/>
+  <circle cx="235" cy="212" r="2.5" fill="#0f3460" opacity="0.6"/>
+  <circle cx="285" cy="187" r="3" fill="#0f3460" opacity="0.7"/>
+  <circle cx="355" cy="176" r="3" fill="#e94560" opacity="0.5"/>
+  <circle cx="405" cy="159" r="3" fill="#e94560" opacity="0.6"/>
+  <circle cx="462" cy="149" r="3.5" fill="#e94560" opacity="0.8"/>
+  
+  <!-- Thin connecting lines between some nodes - graph edges -->
+  <line x1="115" y1="265" x2="165" y2="222" stroke="#0f3460" stroke-width="0.5" opacity="0.3"/>
+  <line x1="165" y1="222" x2="235" y2="212" stroke="#0f3460" stroke-width="0.5" opacity="0.4"/>
+  <line x1="235" y1="212" x2="285" y2="187" stroke="#0f3460" stroke-width="0.5" opacity="0.5"/>
+  <line x1="285" y1="187" x2="355" y2="176" stroke="#e94560" stroke-width="0.5" opacity="0.4"/>
+  <line x1="355" y1="176" x2="405" y2="159" stroke="#e94560" stroke-width="0.5" opacity="0.5"/>
+  <line x1="405" y1="159" x2="462" y2="149" stroke="#e94560" stroke-width="0.5" opacity="0.6"/>
+  <!-- Cross connections (scale-free hint) -->
+  <line x1="115" y1="265" x2="285" y2="187" stroke="#0f3460" stroke-width="0.3" opacity="0.2"/>
+  <line x1="165" y1="222" x2="405" y2="159" stroke="#0f3460" stroke-width="0.3" opacity="0.15"/>
+  
+  <!-- Text: antiloop -->
+  <text x="505" y="310" font-family="'Georgia', 'Times New Roman', serif" 
+        font-size="52" font-weight="bold" fill="#e94560" letter-spacing="3">
+    antiloop
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="508" y="340" font-family="'Georgia', 'Times New Roman', serif" 
+        font-size="16" fill="#5a5a8a" letter-spacing="5" font-style="italic">
+    don't loop, don't randomize
+  </text>
+  
+  <!-- Very subtle grid pattern suggesting graph structure in background -->
+  <g opacity="0.03" stroke="#e94560" stroke-width="0.5">
+    <line x1="0" y1="100" x2="800" y2="100"/>
+    <line x1="0" y1="200" x2="800" y2="200"/>
+    <line x1="0" y1="300" x2="800" y2="300"/>
+    <line x1="200" y1="0" x2="200" y2="400"/>
+    <line x1="400" y1="0" x2="400" y2="400"/>
+    <line x1="600" y1="0" x2="600" y2="400"/>
+  </g>
+</svg>

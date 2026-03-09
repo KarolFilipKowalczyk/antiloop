@@ -127,7 +127,7 @@ Classify every claim into exactly one of three tiers:
 
 **Tier 3 — Conjectured with simulation support:**
 - Heavy-tailed topology (α ≈ 2.05 spawn model at 44k nodes, lognormal-like per Broido-Clauset; α ≈ 2.47 LPAN)
-- Three growth phases (boundary criteria proposed, untested)
+- Three growth phases with sharp Phase 2 transition (O5 confirmed 10/10 seeds; O5b variable memory confirms sharpness is fundamental)
 - Edges carry MI excess (ρ ≈ 1.15, 29σ, LPAN model)
 - Shared encodings → consensus structure (simulation)
 

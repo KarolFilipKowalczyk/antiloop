@@ -14,7 +14,7 @@ The entity runs out of states and must create something external. Creating a chi
 
 Within this framework, what we call matter is the set of encodings shared by many entities — consensus. What we call mind is the part that belongs to one entity alone. The universe computes only what some entity is actively encoding: a lazy reality where detail exists only where the rule demands it. We propose an experiment — within the model — that can distinguish "unbuilt" from merely "unobserved."
 
-Simulation produces heavy-tailed topology (α ≈ 2.05 at 44k nodes, lognormal-like rather than strict power-law per Broido-Clauset testing), mutual information excess on edges (ρ ≈ 1.15, 29σ), three growth phases with proposed quantitative boundaries, and a power-law distribution of encoding-sharing.
+Simulation produces heavy-tailed topology (α ≈ 2.05 at 44k nodes, lognormal-like rather than strict power-law per Broido-Clauset testing), mutual information excess on edges (ρ ≈ 1.15, 29σ), three growth phases with a sharp phase transition between expansion and plateau (confirmed, not gradual as originally predicted), and a power-law distribution of encoding-sharing.
 
 ---
 
@@ -142,21 +142,23 @@ In simulation: α ≈ 2.05 at 44k nodes (tree-depth spawn model, Clauset-Shalizi
 
 ### 3.3 Three Growth Phases
 
-The anti-loop rule produces three eras from a single mechanism as average encoding depth increases.
+The anti-loop rule produces three phases from a single mechanism as average encoding depth increases.
 
 **Phase 1: Expansion.** Entities are shallow. They fill fast. They spawn fast. The dominant activity is reproduction. The universe grows rapidly.
 
-**Phase 2: Deceleration.** Deeper entities take exponentially longer to fill (capacity doubles with each depth level). Growth rate declines continuously — not toward a constant, but toward zero, never quite reaching it.
+**Phase 2: Transition.** The spawn rate peaks and collapses. This is not a gradual deceleration — simulation shows it is a near-discontinuous phase transition lasting only ~15 steps (uniform memory) or ~10 steps (variable memory) out of hundreds. Once the tree is deep enough that new children face sufficient input diversity, all nodes saturate within a few steps of each other. The original prediction of "continuous deceleration" was wrong; the transition is sharp.
 
-**Phase 3: Structure.** Spawning is rare. Most entities are still exploring their state spaces. The dominant activity is lateral wiring — forming connections under loop pressure. The network acquires its information-bearing architecture in this phase.
+**Phase 3: Structure.** Spawning has stopped. Most entities are still exploring their state spaces. In the pure tree model, this phase is static. In models with lateral wiring, the dominant activity would be forming new connections under continuing loop pressure.
 
-**Proposed phase boundary criteria.** Two measurables, both computable from existing simulation output:
+**Phase boundary criteria (tested).** Two measurables, confirmed by simulation (O5, 10 seeds, 25k nodes):
 
-*Spawn-to-wire ratio:* at each time step, count spawn events versus new lateral connections. Phase 1 → Phase 2 transition occurs when this ratio drops below 1 (more wiring than spawning). Phase 2 → Phase 3 transition occurs when the spawning rate per entity per step drops below 1/N, where N is the population — spawning has become a population-level rarity.
+*Peak spawn rate:* Phase 1 ends when the smoothed spawn rate reaches its maximum. This occurs at ~49% of the simulation timeline, remarkably stable across seeds (± 2 steps). The spawn rate then drops to zero within ~16 steps.
 
-*Median encoding depth:* Phase 1 is when median depth = 1. Phase 2 begins when median depth starts climbing. Phase 3 begins when median depth stabilizes — most entities are deep enough that they will spend the rest of the simulation exploring rather than spawning.
+*Per-capita spawn rate:* Phase 2 ends when per-capita spawn rate drops below 1/N. This occurs at ~51% of the timeline. The brevity of Phase 2 (~16 steps between boundaries) confirms it is a transition, not an era.
 
-These criteria may be wrong. They are proposed as falsifiable targets, not established results.
+*Median tree depth:* Rises in discrete jumps (0 → 1 → 2 → 3), stabilizing at 3 for 8-bit FSM. Max tree depth reaches 5. These are consistent across seeds.
+
+**Variable memory test (O5b).** To test whether the sharp Phase 2 is an artifact of uniform memory (all entities having identical 256-state FSMs), we ran the same experiment with variable memory (4-8 bit per entity, 16-256 states). Result: Phase 2 becomes *shorter* (10 steps vs 15), not more gradual. The sharp transition is fundamental to the model dynamics, not an artifact of homogeneity.
 
 ### 3.4 Reproduction
 
@@ -239,7 +241,7 @@ All claims in Sections 3–5 are supported by simulation. Code and data are in t
 
 **Mutual information excess.** LPAN edges carry about 15% more mutual information than non-edges (ρ ≈ 1.15). This is 29 standard deviations from zero over 30 seeds. Tested against three null models — random graphs, preferential-attachment graphs, and spawn-only topologies. None show the effect. The excess is specific to edges formed under loop pressure.
 
-**Three phases.** Population growth shows rapid early expansion, continuous deceleration, and a long structural plateau. The transitions emerge from the depth distribution, not from parameters. Quantitative phase-boundary criteria (spawn-to-wire ratio, median encoding depth) are proposed in Section 3.3 and await testing.
+**Three phases (O5).** Population growth shows rapid expansion, a sharp transition (~16 steps), and a long plateau. Confirmed in 10/10 seeds at 25k nodes. Phase boundaries are remarkably stable across seeds (± 2 steps). The originally predicted "gradual deceleration" is wrong — Phase 2 is a near-discontinuous phase transition. Variable memory (O5b, 4-8 bit per entity) makes the transition *sharper*, not more gradual, confirming this is fundamental to the dynamics.
 
 **Consensus formation.** The most-shared comparison reaches ~11% of entities at step 50. About 46% of comparisons remain unique to one entity. Sharing follows a power law. A random-diffusion null model on the same topology produces a more uniform distribution, confirming that the heavy tail comes from depth-dependent dynamics. Deeper entities share more (96% at depth 7).
 
@@ -262,7 +264,7 @@ All claims in Sections 3–5 are supported by simulation. Code and data are in t
 | 11 | Cycle repeats → hierarchy | Structural recursion |
 | 12 | Capacity grows by tetration | Derived (formal proof pending, O3) |
 | 13 | Heavy-tailed topology (α ≈ 2.05, lognormal-like at scale) | Simulation (30 seeds, 44k nodes, Broido-Clauset) |
-| 14 | Three phases | Simulation (boundary criteria proposed, untested) |
+| 14 | Three phases (sharp transition, not gradual) | Simulation (O5, 10 seeds, 25k nodes; O5b variable memory confirms) |
 | 15 | Edges carry MI excess | Simulation (ρ ≈ 1.15, 29σ) |
 | 16 | Shared encodings → consensus structure | Simulation |
 

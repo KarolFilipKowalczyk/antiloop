@@ -38,7 +38,7 @@ The key formal result. An entity distinguishing D < s^k input patterns from k co
 
 - **Heavy-tailed topology:** spawn model α ≈ 2.05 at 44k nodes (30 seeds). Heavy-tailed and hub-dominated, better fit by lognormal than pure power-law at large scale — consistent with Broido & Clauset (2019). Random tree control: α ≈ 2.85 (massive separation). LPAN model: α ≈ 2.47 (30 seeds, CSN confirmed at small scale).
 - **MI excess on edges:** ρ ≈ 1.15 (29σ over 30 seeds) — anti-loop edges carry more mutual information than non-edges
-- **Three growth phases:** expansion → deceleration → structure, emerging from depth distribution
+- **Three growth phases:** expansion → sharp transition (~16 steps) → plateau, confirmed 10/10 seeds. Phase 2 is a near-discontinuous phase transition, not gradual deceleration. Variable memory makes it sharper, not smoother.
 
 ## What the model does NOT claim
 

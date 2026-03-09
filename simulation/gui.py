@@ -35,13 +35,31 @@ def _find_icon():
     return None
 
 
+def _detect_gpu():
+    """Detect GPU availability and return info string."""
+    try:
+        from simulation.shared.engine import HAS_CUDA
+        if not HAS_CUDA:
+            return None
+        import cupy as cp
+        props = cp.cuda.runtime.getDeviceProperties(0)
+        name = props["name"]
+        if isinstance(name, bytes):
+            name = name.decode()
+        mem = cp.cuda.Device(0).mem_info
+        total_mb = mem[1] / (1024 * 1024)
+        return f"{name} ({total_mb:.0f} MB)"
+    except Exception:
+        return None
+
+
 class ProgressWindow:
     """Tkinter window showing simulation progress."""
 
     def __init__(self, title="Antiloop Experiment"):
         self.root = tk.Tk()
         self.root.title(f"ANTILOOP - {title}")
-        self.root.geometry("620x400")
+        self.root.geometry("620x460")
         self.root.resizable(True, True)
 
         # Set window icon
@@ -58,29 +76,61 @@ class ProgressWindow:
 
         self._msg_queue = queue.Queue()
         self._done = False
+        self._overall_step = 0
+        self._overall_total = 1
 
         frame = ttk.Frame(self.root, padding=12)
         frame.pack(fill=tk.BOTH, expand=True)
 
-        # Phase label
+        # Header row: phase label + GPU badge
+        header = ttk.Frame(frame)
+        header.pack(fill=tk.X)
+
         self._phase_var = tk.StringVar(value="Initializing...")
-        ttk.Label(frame, textvariable=self._phase_var,
-                  font=("Segoe UI", 11, "bold")).pack(anchor=tk.W)
+        ttk.Label(header, textvariable=self._phase_var,
+                  font=("Segoe UI", 11, "bold")).pack(side=tk.LEFT)
+
+        # GPU indicator
+        gpu_info = _detect_gpu()
+        if gpu_info:
+            gpu_text = f"CUDA: {gpu_info}"
+            gpu_fg = "#4caf50"
+        else:
+            gpu_text = "CPU only"
+            gpu_fg = "#999999"
+        self._gpu_label = tk.Label(header, text=gpu_text, fg=gpu_fg,
+                                   font=("Consolas", 8))
+        self._gpu_label.pack(side=tk.RIGHT)
 
         # Status label
         self._status_var = tk.StringVar(value="")
         ttk.Label(frame, textvariable=self._status_var,
                   font=("Segoe UI", 9)).pack(anchor=tk.W, pady=(2, 6))
 
-        # Progress bar
-        self._progress = ttk.Progressbar(frame, mode="determinate",
-                                         maximum=100, length=580)
-        self._progress.pack(fill=tk.X, pady=(0, 8))
-
-        # Percentage label
+        # Overall progress bar (seeds)
+        overall_frame = ttk.Frame(frame)
+        overall_frame.pack(fill=tk.X, pady=(0, 2))
+        ttk.Label(overall_frame, text="Overall:",
+                  font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=(0, 6))
+        self._progress = ttk.Progressbar(overall_frame, mode="determinate",
+                                         maximum=100)
+        self._progress.pack(side=tk.LEFT, fill=tk.X, expand=True)
         self._pct_var = tk.StringVar(value="0%")
-        ttk.Label(frame, textvariable=self._pct_var,
-                  font=("Segoe UI", 9)).pack(anchor=tk.E)
+        ttk.Label(overall_frame, textvariable=self._pct_var,
+                  font=("Segoe UI", 8), width=5).pack(side=tk.LEFT, padx=(6, 0))
+
+        # Per-seed progress bar
+        seed_frame = ttk.Frame(frame)
+        seed_frame.pack(fill=tk.X, pady=(0, 8))
+        self._seed_label_var = tk.StringVar(value="Seed:")
+        ttk.Label(seed_frame, textvariable=self._seed_label_var,
+                  font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=(0, 6))
+        self._seed_progress = ttk.Progressbar(seed_frame, mode="determinate",
+                                              maximum=100)
+        self._seed_progress.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self._seed_pct_var = tk.StringVar(value="0%")
+        ttk.Label(seed_frame, textvariable=self._seed_pct_var,
+                  font=("Segoe UI", 8), width=5).pack(side=tk.LEFT, padx=(6, 0))
 
         # Log area
         self._log = tk.Text(frame, height=14, font=("Consolas", 9),
@@ -91,8 +141,12 @@ class ProgressWindow:
         self.root.after(50, self._poll)
 
     def update(self, step, total, phase, status):
-        """Thread-safe progress update."""
+        """Thread-safe overall progress update. Stores seed count for interpolation."""
         self._msg_queue.put(("progress", step, total, phase, status))
+
+    def update_seed(self, step, total, label=""):
+        """Thread-safe per-seed progress update. Also updates overall bar."""
+        self._msg_queue.put(("seed_progress", step, total, label))
 
     def log(self, text):
         """Thread-safe log line."""
@@ -108,11 +162,26 @@ class ProgressWindow:
                 msg = self._msg_queue.get_nowait()
                 if msg[0] == "progress":
                     _, step, total, phase, status = msg
-                    pct = (step / total * 100) if total > 0 else 0
+                    self._overall_step = step
+                    self._overall_total = max(total, 1)
+                    pct = (step / self._overall_total * 100)
                     self._progress["value"] = pct
                     self._pct_var.set(f"{pct:.0f}%")
                     self._phase_var.set(phase)
                     self._status_var.set(status)
+                elif msg[0] == "seed_progress":
+                    _, step, total, label = msg
+                    seed_frac = (step / max(total, 1))
+                    pct = seed_frac * 100
+                    self._seed_progress["value"] = pct
+                    self._seed_pct_var.set(f"{pct:.0f}%")
+                    if label:
+                        self._seed_label_var.set(label)
+                    # Interpolate overall: completed seeds + fraction of current
+                    overall_pct = ((self._overall_step + seed_frac)
+                                   / self._overall_total * 100)
+                    self._progress["value"] = min(overall_pct, 100)
+                    self._pct_var.set(f"{min(overall_pct, 100):.0f}%")
                 elif msg[0] == "log":
                     self._log.config(state=tk.NORMAL)
                     self._log.insert(tk.END, msg[1] + "\n")
@@ -122,6 +191,8 @@ class ProgressWindow:
                     self._done = True
                     self._progress["value"] = 100
                     self._pct_var.set("100%")
+                    self._seed_progress["value"] = 100
+                    self._seed_pct_var.set("100%")
                     self._phase_var.set("Done")
                     self._status_var.set("Closing...")
                     self.root.after(1500, self.root.destroy)
@@ -139,7 +210,8 @@ class Progress:
     """Progress reporting interface passed to experiments.
 
     Works in both GUI and headless mode. Experiments call:
-        progress.update(step, total, phase, status)
+        progress.update(step, total, phase, status)  — overall (seeds)
+        progress.update_seed(step, total, label)      — per-seed
         progress.log("message")
     """
 
@@ -149,6 +221,10 @@ class Progress:
     def update(self, step, total, phase, status):
         if self._window:
             self._window.update(step, total, phase, status)
+
+    def update_seed(self, step, total, label=""):
+        if self._window:
+            self._window.update_seed(step, total, label)
 
     def log(self, text):
         print(text)

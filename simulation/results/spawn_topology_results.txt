@@ -2,48 +2,48 @@
 O4: Spawn Model Topology — Scale-Free Test
 ============================================================
 Seeds completed: 3/3
-Nodes per graph: 42741
+Nodes per graph: 44413
 Memory: 8 bits (256 states)
 
 ANTILOOP SPAWN MODEL:
-  alpha = 2.016 +/- 0.015
-  range: [2.001, 2.037]
-  power_law > exponential:          2/3
+  alpha = 2.054 +/- 0.018
+  range: [2.041, 2.079]
+  power_law > exponential:          3/3
   power_law > lognormal:            0/3
   power_law > stretched_exponential: 0/3
 
 RANDOM TREE CONTROL:
-  alpha = 2.853 +/- 0.000
+  alpha = 2.855 +/- 0.001
 
 Per-seed detail:
   antiloop seed=1000:
-    alpha = 2.037 +/- 0.037  (xmin = 14, n_tail = 798)
-    vs exponential          R=+1.738  p=0.0823  power_law BETTER ns
-    vs lognormal            R=-5.377  p=0.0000  lognormal BETTER ***
-    vs stretched_exponential R=-5.541  p=0.0000  stretched_exponential BETTER ***
+    alpha = 2.079 +/- 0.038  (xmin = 15, n_tail = 804)
+    vs exponential          R=+1.915  p=0.0555  power_law BETTER ns
+    vs lognormal            R=-5.222  p=0.0000  lognormal BETTER ***
+    vs stretched_exponential R=-5.371  p=0.0000  stretched_exponential BETTER ***
   antiloop seed=1001:
-    alpha = 2.009 +/- 0.035  (xmin = 13, n_tail = 829)
-    vs exponential          R=+2.513  p=0.0120  power_law BETTER **
-    vs lognormal            R=-5.421  p=0.0000  lognormal BETTER ***
-    vs stretched_exponential R=-5.576  p=0.0000  stretched_exponential BETTER ***
+    alpha = 2.041 +/- 0.035  (xmin = 13, n_tail = 894)
+    vs exponential          R=+3.614  p=0.0003  power_law BETTER ***
+    vs lognormal            R=-5.162  p=0.0000  lognormal BETTER ***
+    vs stretched_exponential R=-5.340  p=0.0000  stretched_exponential BETTER ***
   antiloop seed=1002:
-    alpha = 2.001 +/- 0.036  (xmin = 14, n_tail = 783)
-    vs exponential          R=-0.294  p=0.7688  exponential BETTER ns
-    vs lognormal            R=-6.016  p=0.0000  lognormal BETTER ***
-    vs stretched_exponential R=-6.238  p=0.0000  stretched_exponential BETTER ***
+    alpha = 2.042 +/- 0.037  (xmin = 15, n_tail = 784)
+    vs exponential          R=+0.009  p=0.9925  power_law BETTER ns
+    vs lognormal            R=-5.699  p=0.0000  lognormal BETTER ***
+    vs stretched_exponential R=-5.907  p=0.0000  stretched_exponential BETTER ***
 
   control seed=1000:
-    alpha = 2.853 +/- 0.013  (xmin = 2, n_tail = 21344)
-    vs exponential          R=-30.617  p=0.0000  exponential BETTER ***
-    vs lognormal            R=-29.912  p=0.0000  lognormal BETTER ***
-    vs stretched_exponential R=-30.499  p=0.0000  stretched_exponential BETTER ***
+    alpha = 2.854 +/- 0.012  (xmin = 2, n_tail = 22183)
+    vs exponential          R=-31.264  p=0.0000  exponential BETTER ***
+    vs lognormal            R=-30.509  p=0.0000  lognormal BETTER ***
+    vs stretched_exponential R=-31.118  p=0.0000  stretched_exponential BETTER ***
   control seed=1001:
-    alpha = 2.853 +/- 0.013  (xmin = 2, n_tail = 21327)
-    vs exponential          R=-30.009  p=0.0000  exponential BETTER ***
-    vs lognormal            R=-29.760  p=0.0000  lognormal BETTER ***
-    vs stretched_exponential R=-30.359  p=0.0000  stretched_exponential BETTER ***
+    alpha = 2.856 +/- 0.012  (xmin = 2, n_tail = 22183)
+    vs exponential          R=-30.020  p=0.0000  exponential BETTER ***
+    vs lognormal            R=-30.097  p=0.0000  lognormal BETTER ***
+    vs stretched_exponential R=-30.714  p=0.0000  stretched_exponential BETTER ***
   control seed=1002:
-    alpha = 2.853 +/- 0.013  (xmin = 2, n_tail = 21329)
-    vs exponential          R=-30.628  p=0.0000  exponential BETTER ***
-    vs lognormal            R=-29.931  p=0.0000  lognormal BETTER ***
-    vs stretched_exponential R=-30.673  p=0.0000  stretched_exponential BETTER ***
+    alpha = 2.856 +/- 0.012  (xmin = 2, n_tail = 22188)
+    vs exponential          R=-30.833  p=0.0000  exponential BETTER ***
+    vs lognormal            R=-30.363  p=0.0000  lognormal BETTER ***
+    vs stretched_exponential R=-31.123  p=0.0000  stretched_exponential BETTER ***

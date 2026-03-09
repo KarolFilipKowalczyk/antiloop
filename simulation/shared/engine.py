@@ -206,9 +206,11 @@ def run_spawn_model(mem_bits, max_nodes, seed=42,
     t_start = time.time()
 
     growth_log = [(0, 1)]
+    t_last_update = t_start
 
     for step in range(1, max_steps + 1):
-        if time_limit and (time.time() - t_start) > time_limit:
+        now = time.time()
+        if time_limit and (now - t_start) > time_limit:
             break
 
         # Step all nodes
@@ -229,12 +231,10 @@ def run_spawn_model(mem_bits, max_nodes, seed=42,
         n_now = model.n_nodes
         growth_log.append((step, n_now))
 
-        if progress and step % 20 == 0:
-            elapsed = time.time() - t_start
-            progress.update(
-                min(n_now, max_nodes), max_nodes,
-                "Growing", f"step {step}, {n_now} nodes, {elapsed:.0f}s"
-            )
+        # Update progress at ~10 Hz (every 100ms)
+        if progress and (time.time() - t_last_update) >= 0.1:
+            progress.update_seed(min(n_now, max_nodes), max_nodes)
+            t_last_update = time.time()
 
         if n_now >= max_nodes:
             break

@@ -84,13 +84,16 @@ def run(progress, out_dir, n_seeds, max_nodes, mem_bits, time_budget, **_):
         seed_limit = remaining / seeds_left
         progress.update(i, n_seeds, "Running seeds",
                         f"Seed {i+1}/{n_seeds} ({max_nodes} nodes, {seed_limit:.0f}s budget)")
+        progress.update_seed(0, max_nodes, f"Seed {seed}:")
 
         # Antiloop spawn model
         G, nodes, growth_log = run_spawn_model(
             mem_bits=mem_bits, max_nodes=max_nodes, seed=seed,
             time_limit=seed_limit * 0.9,  # leave 10% for analysis
+            progress=progress,
         )
         n_final = G.number_of_nodes()
+        progress.update_seed(n_final, max_nodes)
 
         # Random tree control (same size)
         G_ctrl = build_random_tree_control(n_final, seed=seed + 500000)

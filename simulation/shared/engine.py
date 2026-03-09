@@ -56,13 +56,15 @@ class SpawnModel:
     """
 
     def __init__(self, mem_bits, max_nodes, seed=42, mem_bits_range=None,
-                 lateral_wiring=False):
+                 lateral_wiring=False, encoding='flat', D_max=None):
         self.mem_bits = mem_bits
         self.config_space = 2 ** mem_bits  # max config space (for allocation)
         self.max_nodes = max_nodes
         self.rng = np.random.default_rng(seed)
         self.mem_bits_range = mem_bits_range  # None = uniform, (lo, hi) = variable
         self.lateral_wiring = lateral_wiring
+        self.encoding = encoding  # 'flat' (XOR) or 'hierarchical' (polynomial)
+        self.D_max = D_max if D_max else self.config_space ** 2
 
         # Pre-allocate arrays for max_nodes
         C = self.config_space
@@ -87,6 +89,14 @@ class SpawnModel:
         self.children = [[] for _ in range(max_nodes)]
         # Neighbor sets for fast hash computation (includes lateral edges)
         self._neighbor_sets = [set() for _ in range(max_nodes)]
+
+        # Hierarchical encoding: extended tables for hash values >= C
+        # Maps (config, hash_val) -> next_config, generated deterministically
+        self._extended_tables = [dict() for _ in range(max_nodes)]
+
+        # Spawn event tracking: (nid, step, degree, interval)
+        self.spawn_events = []
+        self.last_spawn_step = np.zeros(max_nodes, dtype=np.int32)
 
         # GPU arrays (lazily initialized)
         self._gpu_tables = None
@@ -122,6 +132,7 @@ class SpawnModel:
         self.looped[nid] = False
         self.visited_counts[nid] = 1
         self.birth_steps[nid] = step
+        self.last_spawn_step[nid] = step  # for interval tracking
 
         self.G.add_node(nid)
         if parent_id >= 0:
@@ -130,6 +141,9 @@ class SpawnModel:
             self.children[parent_id].append(nid)
             self._neighbor_sets[parent_id].add(nid)
             self._neighbor_sets[nid].add(parent_id)
+            # Hierarchical: parent's D_eff changed, reset its effective set
+            if self.encoding == 'hierarchical':
+                self.effective_sets[parent_id] = set()
 
         self.n_nodes += 1
         self._gpu_tables = None  # invalidate GPU cache
@@ -145,6 +159,10 @@ class SpawnModel:
         self.G.add_edge(nid, target)
         self._neighbor_sets[nid].add(target)
         self._neighbor_sets[target].add(nid)
+        # Hierarchical: D_eff changed for both endpoints
+        if self.encoding == 'hierarchical':
+            self.effective_sets[nid] = set()
+            self.effective_sets[target] = set()
         return target
 
     def _init_gpu(self):
@@ -159,28 +177,68 @@ class SpawnModel:
         else:
             self._use_gpu = False
 
+    def _get_d_eff(self, nid):
+        """Effective input discrimination for entity nid."""
+        if self.encoding != 'hierarchical':
+            return int(self.node_config_spaces[nid])
+        degree = len(self._neighbor_sets[nid])
+        if degree == 0:
+            return 1
+        C = int(self.node_config_spaces[nid])
+        return min(C ** degree, self.D_max)
+
+    def _table_lookup(self, nid, config, hash_val):
+        """Look up transition table, extending lazily for hash >= C."""
+        C = int(self.node_config_spaces[nid])
+        if hash_val < C:
+            return int(self.tables[nid, config, hash_val])
+        # Extended table: deterministic from (nid, config, hash_val)
+        key = (config, hash_val)
+        d = self._extended_tables[nid]
+        if key not in d:
+            x = (nid * 2654435761 + config * 2246822519
+                 + hash_val * 3266489917) & 0xFFFFFFFF
+            d[key] = int(x % C)
+        return d[key]
+
     def step_all(self):
         """Step all nodes in one vectorized operation."""
         N = self.n_nodes
         ncs = self.node_config_spaces[:N]
 
-        # Compute input hash for each node: XOR of neighbor configs
-        hashes = np.zeros(N, dtype=np.int32)
-        for nid in range(N):
-            h = 0
-            for nb in self._neighbor_sets[nid]:
-                h ^= self.configs[nb]
-            hashes[nid] = h % ncs[nid]
+        hashes = np.zeros(N, dtype=np.int64)
 
-        # Batch table lookup: new_config[i] = tables[i, configs[i], hashes[i]]
+        if self.encoding == 'hierarchical':
+            # Polynomial hash: non-commutative, D_eff grows with degree
+            for nid in range(N):
+                C_nid = int(ncs[nid])
+                D_eff = self._get_d_eff(nid)
+                h = 0
+                for nb in sorted(self._neighbor_sets[nid]):
+                    h = (h * C_nid + int(self.configs[nb])) % D_eff
+                hashes[nid] = h
+        else:
+            # Flat: XOR hash, D_eff = C
+            for nid in range(N):
+                h = 0
+                for nb in self._neighbor_sets[nid]:
+                    h ^= self.configs[nb]
+                hashes[nid] = h % ncs[nid]
+
+        # Table lookup
         cur = self.configs[:N]
-        if self._use_gpu and self._gpu_tables is not None:
+        if self.encoding == 'hierarchical':
+            new_configs = np.zeros(N, dtype=np.int32)
+            for nid in range(N):
+                new_configs[nid] = self._table_lookup(
+                    nid, int(cur[nid]), int(hashes[nid]))
+        elif self._use_gpu and self._gpu_tables is not None:
             cur_gpu = cp.asarray(cur)
-            h_gpu = cp.asarray(hashes)
+            h_gpu = cp.asarray(hashes.astype(np.int32))
             new_gpu = self._gpu_tables[cp.arange(N), cur_gpu, h_gpu]
             new_configs = cp.asnumpy(new_gpu)
         else:
-            new_configs = self.tables[np.arange(N), cur, hashes]
+            new_configs = self.tables[np.arange(N), cur, hashes.astype(np.int32)]
 
         # Check for effective state revisits BEFORE updating configs
         for nid in range(N):
@@ -299,6 +357,69 @@ def run_spawn_model(mem_bits, max_nodes, seed=42,
         "config_space": model.config_space,
         "parent": model.parent[:model.n_nodes].copy(),
         "node_mem_bits": model.node_mem_bits[:model.n_nodes].copy(),
+    }
+
+    return model.G, nodes_data, growth_log
+
+
+def run_hierarchical_model(mem_bits, max_nodes, seed=42,
+                           max_steps=200000, time_limit=None,
+                           progress=None, D_max=None):
+    """Run spawn model with hierarchical encoding (blindness theorem test).
+
+    Loop-triggered spawning only: entities spawn when they revisit an
+    effective state. No pressure threshold. Hierarchical encoding makes
+    D_eff grow with degree, so well-connected entities live longer.
+
+    Returns:
+        G: networkx.Graph (the spawn tree)
+        nodes_data: dict with birth_steps, config_space, parent, spawn_events
+        growth_log: list of (step, n_nodes) tuples
+    """
+    model = SpawnModel(mem_bits, max_nodes, seed,
+                       encoding='hierarchical', D_max=D_max)
+    t_start = time.time()
+
+    growth_log = [(0, 1)]
+    t_last_update = t_start
+
+    for step in range(1, max_steps + 1):
+        now = time.time()
+        if time_limit and (now - t_start) > time_limit:
+            break
+
+        model.step_all()
+
+        # Loop-triggered spawning only
+        if model.n_nodes < max_nodes:
+            for nid in range(model.n_nodes):
+                if model.looped[nid]:
+                    degree = len(model._neighbor_sets[nid])
+                    interval = step - int(model.last_spawn_step[nid])
+                    model.spawn_events.append((nid, step, degree, interval))
+                    model.last_spawn_step[nid] = step
+
+                    model._add_node(parent_id=nid, step=step)
+                    model.looped[nid] = False
+                    model.effective_sets[nid] = set()
+                    if model.n_nodes >= max_nodes:
+                        break
+
+        n_now = model.n_nodes
+        growth_log.append((step, n_now))
+
+        if progress and (time.time() - t_last_update) >= 0.1:
+            progress.update_seed(min(n_now, max_nodes), max_nodes)
+            t_last_update = time.time()
+
+        if n_now >= max_nodes:
+            break
+
+    nodes_data = {
+        "birth_steps": model.birth_steps[:model.n_nodes].copy(),
+        "config_space": model.config_space,
+        "parent": model.parent[:model.n_nodes].copy(),
+        "spawn_events": model.spawn_events,
     }
 
     return model.G, nodes_data, growth_log

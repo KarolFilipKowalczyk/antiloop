@@ -114,7 +114,7 @@ Classify every claim into exactly one of three tiers:
 - Finite + deterministic → must loop (pigeonhole, classical)
 - A loop produces no new states (determinism, classical)
 - Solitary entity under A2 + A3 → must spawn via M1 (elimination)
-- Spawning creates a connection (A1: environment in transition function)
+- Spawning creates connections including lateral (A1: shared environment; spawn tree is history, not wiring)
 - Connections → exponential input space (combinatorics)
 - Flat encoding fails under exponential input (Pigeonhole 2)
 - Blindness theorem, restricted case: indistinguishable inputs reduce effective state space (proved)

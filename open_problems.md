@@ -4,7 +4,7 @@ Nine problems for the current framework. Numbered O1–O9 to match the paper.
 
 ---
 
-**O1. Lateral wiring.** Every connection in the base model is a parent-child link created by spawning. Lateral connections — wiring to entities you didn't spawn — appear in the LPAN simulation but are not derived from A1–A3 + M1. Do they emerge from signal propagation through the spawn tree, or do they require a separate mechanism? If separate, can they be derived from M1 or do they need a fifth axiom?
+**O1. Lateral wiring dynamics.** Lateral connections are derived from A1-A4: all entities share an environment, so every entity is potentially connected to every other (Section 2.2 of v4). The spawn tree is causal history, not a wiring constraint. The remaining question is *dynamical*: which lateral connections does an entity activate, and when? What determines the wiring topology — proximity in the spawn tree, signal correlation, loop pressure, or something else? The LPAN model uses one wiring rule; are others consistent with the axioms?
 
 **O2. Encoding uniqueness.** The blindness theorem applies to any hierarchical encoding, not specifically binary comparison trees. Do bounded-width circuits or DAGs provide equally good logarithmic-access encoding under the selection argument? If so, comparison trees are a sufficient but not necessary instance. Elevate this — the paper currently assumes trees without justification.
 

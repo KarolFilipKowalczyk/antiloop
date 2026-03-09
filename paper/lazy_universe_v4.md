@@ -52,7 +52,7 @@ One entity. Capacity C. It visits all C states and is full. The anti-loop rule s
 
 *Status: derived from A1–A4 by elimination.*
 
-### 2.2 Spawning Creates a Connection
+### 2.2 Spawning Creates Connections
 
 The parent spawns a child. Now the child exists in the parent's environment. By A1, the parent's next state is determined by its current state *and its environment*. The environment has changed — there is a new entity in it. Therefore the parent's trajectory changes.
 
@@ -60,7 +60,15 @@ This is what a connection is: the child's existence affects the parent's subsequ
 
 For this to work, the parent must not be sealed off from its environment. But we already know it cannot be sealed: a sealed entity with bounded memory under the anti-loop rule is simply impossible — it loops, full stop, contradicting A2. So the parent's transition function takes environment as input. The child is now in the environment. The connection exists.
 
-*Status: derived from A1 (transition function depends on environment), A2 (sealed entities are impossible), and A4.*
+But the same argument applies to *every* entity. The child is in the environment — not just the parent's environment, but the shared environment of all entities. Any entity whose transition function depends on the environment (and by A2, every entity's must) is affected by the child's existence. The child, in turn, is affected by every entity already present.
+
+This means spawning does not merely create a parent-child edge. It introduces a new entity into a shared space. **Every entity is potentially connected to every other entity, because they share an environment.** The spawn tree records *who created whom* — it is the causal history, not a wiring diagram.
+
+Which connections are *active* — which entities actually affect each other's trajectories at a given moment — depends on encoding. An entity with C states can distinguish at most C input patterns (Section 2.3). It cannot track all entities simultaneously. The connections that matter are the ones the entity is currently encoding. This is a finite, dynamic subset of all possible connections.
+
+Lateral wiring — connections between entities that are not parent and child — is not a separate mechanism. It is the default. Every entity exists in the same environment. The question is not "how do lateral connections form?" but "which connections does each entity attend to?" That is determined by encoding quality under loop pressure (Section 2.4).
+
+*Status: derived from A1 (transition function depends on environment), A2 (sealed entities are impossible), and A4. Lateral connections require no additional axiom.*
 
 ### 2.3 Connections Create an Impossible Problem
 
@@ -138,7 +146,7 @@ Older entities have more children (they have been spawning longer) and more conn
 
 In simulation: α ≈ 2.05 at 44k nodes (tree-depth spawn model, Clauset-Shalizi-Newman methodology). The degree distribution is heavy-tailed and hub-dominated; at large scale it is better fit by lognormal than strict power-law, consistent with Broido & Clauset (2019) findings for most real-world networks. Random tree control shows α ≈ 2.85 with no heavy tail — the separation is unambiguous. The mechanism is not assumed. It falls out of the spawning rule.
 
-*Note on the wiring rule: every connection in the base model is a parent-child link created by spawning. Lateral connections — wiring to entities you didn't spawn — could emerge if signals propagate through the existing tree. Whether lateral wiring needs a separate mechanism or follows from signal propagation is open (O1).*
+*Note on the wiring rule: the spawn tree records causal history (who created whom), not the wiring diagram. All entities share an environment (Section 2.2), so lateral connections are available by default. The simulation's tree-only model is a special case — it restricts attention to parent-child connections. The LPAN model, which includes lateral wiring, is the more faithful implementation of the axioms.*
 
 ### 3.3 Three Growth Phases
 
@@ -148,7 +156,7 @@ The anti-loop rule produces three phases from a single mechanism as average enco
 
 **Phase 2: Transition.** The spawn rate peaks and collapses. At small memory (8-bit, C=256), this is a near-discontinuous phase transition lasting only ~16 steps out of hundreds. At larger memory, Phase 2 widens: width scales as ~C^0.5 (O5c, beta = 0.51 across 4-10 bit). The transition becomes an extended era at large configuration spaces — suggesting the original prediction of "gradual deceleration" was not wrong in principle, only unobservable at the small memory sizes tested initially.
 
-**Phase 3: Structure.** Spawning has stopped. Most entities are still exploring their state spaces. In the pure tree model, this phase is static. In models with lateral wiring, the dominant activity would be forming new connections under continuing loop pressure.
+**Phase 3: Structure.** Spawning has stopped or slowed. Most entities are still exploring their state spaces. In the tree-only simulation (which restricts connections to parent-child links), this phase is static. In the full model — where entities share an environment and can form lateral connections — the dominant activity would be forming new connections under continuing loop pressure.
 
 **Phase boundary criteria (tested).** Two measurables, confirmed by simulation (O5, 10 seeds, 25k nodes):
 
@@ -256,7 +264,7 @@ All claims in Sections 3–5 are supported by simulation. Code and data are in t
 | 1 | Finite + deterministic → must loop | Classical (pigeonhole) |
 | 2 | A loop produces no new states | Classical (determinism) |
 | 3 | Solitary entity under A2 + A3 → must spawn (A4) | Derived by elimination |
-| 4 | Spawning creates a connection | Derived from A1 (environment in transition function) |
+| 4 | Spawning creates connections (including lateral) | Derived from A1 (shared environment); spawn tree is history, not wiring |
 | 5 | Connections → exponential input space | Combinatorics |
 | 6 | Flat encoding fails under exponential input | Pigeonhole 2 |
 | 7 | Indistinguishable inputs reduce effective state space, accelerating loop pressure | Proved (restricted case; general case = O9) |
@@ -284,7 +292,7 @@ But what can an entity *do* to something external? In an empty universe — whic
 
 This has a natural information-theoretic reading. Spawning is a *write* operation: the entity produces something new in the environment. The connection that spawning creates (Section 2.2) is a *read* operation: the parent observes the child's output. Restructuring (Section 2.4) is *compression*: the entity organizes its internal encoding to handle more input. Write, read, compress. These are the three elementary operations of a channel interacting with a noisy environment — and they are not three axioms. They are one axiom (write/spawn) and two consequences (read/connect from spawning, compress/restructure from selection pressure).
 
-Other operations are conceivable. An entity could merge with another, or prune an existing connection, or directly modify another entity's state. The framework does not rule these out — it simply does not include them. Whether adding operations changes the qualitative results is unexplored (O1).
+Other operations are conceivable. An entity could merge with another, or prune an existing connection, or directly modify another entity's state. The framework does not rule these out — it simply does not include them. Note that lateral connections (wiring to non-offspring) are not an additional operation: they follow from the fact that all entities share an environment (Section 2.2). The spawn tree is causal history, not a wiring constraint.
 
 A different formulation — possibly cleaner — would skip dynamics entirely and ask: what structural properties must the class of all finite deterministic non-repeating systems have? That is a characterization question rather than a story about what entities "do." Whether it produces the same results is open.
 
@@ -292,7 +300,7 @@ A different formulation — possibly cleaner — would skip dynamics entirely an
 
 ## 9. Open Problems
 
-**O1. Lateral wiring.** Every connection in the base model is a parent-child link. Do lateral connections (wiring to non-offspring) require a separate mechanism, or do they emerge from signal propagation through the spawn tree? If separate, can they be derived from A4 or do they require a fifth axiom?
+**O1. Lateral wiring dynamics.** Section 2.2 establishes that all entities share an environment, so lateral connections require no separate mechanism. The open question is now *dynamical*: which lateral connections does an entity activate, and when? The LPAN model forms lateral edges under loop pressure. Is this the unique dynamics, or are other wiring rules consistent with A1-A4? What determines the wiring topology — proximity in the spawn tree, signal correlation, or something else?
 
 **O2. Encoding uniqueness.** Does the selection argument (Section 2.4) uniquely favor binary comparison trees, or do other logarithmic-access encodings survive equally well?
 

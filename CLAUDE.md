@@ -60,7 +60,14 @@ antiloop/
 ├── CLAUDE.md                    ← you are here
 ├── README.md                    — v4 framework overview
 ├── paper/
-│   └── lazy_universe_v4.md      — the current paper (authoritative)
+│   ├── lazy_universe_v4.md      — the current paper (authoritative)
+│   └── blindness_theorem_general.md — O9 general case proof
+├── simulation/
+│   ├── gui.py                   — tkinter progress window (visible-if-possible)
+│   ├── run.py                   — unified experiment runner with time budgets
+│   ├── experiments/             — auto-discovered experiments (TITLE + run())
+│   ├── shared/                  — common utilities, CSN testing, plotting
+│   └── results/                 — output plots and data
 ├── open_problems.md             — O1–O9 from v4 paper
 ├── archive/
 │   ├── theory_v01.md            — original T1–T6 framework (historical)
@@ -71,8 +78,6 @@ antiloop/
 │   └── old_simulation/          — original LPAN engine, experiments, results, visualization
 └── logo/                        — the antylope
 ```
-
-New simulation directories (`simulation/spawn_model/`, `simulation/lpan_model/`, `simulation/consensus_model/`, `simulation/shared/`) should be created fresh when needed, not retrofitted from the archived LPAN engine.
 
 ## Cleanup tasks (completed)
 
@@ -91,9 +96,9 @@ All six cleanup tasks have been completed:
 
 These are load-bearing problems. Do not build more structure on top of them.
 
-1. **Variation mechanism.** The blindness theorem proves hierarchical encoding is better. The selection argument says flat encoders die young. But where does the variation come from? If all children inherit the parent's encoding, all encodings are flat forever. The selection argument requires a source of variation. Either define one or acknowledge this as a gap equal to the tetration proof.
+1. ~~**Variation mechanism.**~~ **Resolved.** Children start blank — M1 creates a new system, not a copy. Different network positions → different inputs → different effective encodings. Variation is automatic. Added to paper Section 2.4.
 
-2. **Child complexity guarantee.** v4 claims the child is "at least one comparison level more complex than the parent." This is stated but not proved. Why can't the child start at depth zero? If it can, the hierarchy still builds (children deepen under Pigeonhole 2), but the claim about guaranteed generational increase is unsupported.
+2. **Child complexity guarantee.** v4 claims the child is "at least one comparison level more complex than the parent." This is stated but not proved. With "children start blank," children start at depth zero and deepen under Pigeonhole 2. The hierarchy still builds, but the claim about guaranteed generational increase is unsupported. Consider dropping or weakening the claim in Section 3.4.
 
 3. **Tetration proof (O3).** Tower-of-powers capacity growth is derived under specific assumptions but not formally proved. "Derived but not proved" means "conjectured with a plausibility argument." Say that.
 
@@ -115,7 +120,7 @@ Classify every claim into exactly one of three tiers:
 - Blindness theorem, restricted case: indistinguishable inputs reduce effective state space (proved)
 
 **Tier 2 — Conditionally derived (follows if specific assumptions hold):**
-- Hierarchical encoding is a selection effect (requires variation mechanism — unstated)
+- Hierarchical encoding is a selection effect (variation from M1: children start blank, network position diversity)
 - Finite encoding + growing connections → overwhelmed (Pigeonhole 3)
 - Cycle repeats → hierarchy (structural recursion, depends on Tier 2 items above)
 - Capacity grows by tetration (formal proof pending, O3)
@@ -141,7 +146,13 @@ Classify every claim into exactly one of three tiers:
 
 - Python: numpy, networkx, matplotlib, scipy, powerlaw
 - `powerlaw` package for Clauset-Shalizi-Newman testing (`pip install powerlaw`)
-- Minimum 30 seeds for publishable results
+- Experiment runner: `python -m simulation.run <name> [--quick|--long]`
+  - `--quick`: 60s, 3 seeds (20s/seed) — smoke test
+  - default: 300s, 10 seeds (30s/seed) — development
+  - `--long`: 900s, 30 seeds (30s/seed) — publishable
+  - `--seeds N --time N`: manual override
+- Experiments auto-discover from `simulation/experiments/` (need `TITLE` + `run()`)
+- GUI progress window shown when available, falls back to headless
 - Always include proper controls and null models
 - Report negative results honestly
 
@@ -160,8 +171,8 @@ Classify every claim into exactly one of three tiers:
 ## Priority work order
 
 1. ~~**Repo cleanup** (tasks 1–6)~~ — done
-2. **Prove the blindness theorem, general case (O9)** — this is the single highest-value task
-3. **Address the variation mechanism gap** — either define it or state it prominently as open
+2. ~~**Prove the blindness theorem, general case (O9)**~~ — proved for input-independent δ; general δ conjectured (see `paper/blindness_theorem_general.md`)
+3. ~~**Address the variation mechanism gap**~~ — resolved: children start blank, variation from network position diversity
 4. **Scale testing (O4)** — CSN at 10⁴–10⁵ entities
 5. **Phase boundary validation (O5)** — test spawn-to-wire ratio and median encoding depth
 6. Everything else

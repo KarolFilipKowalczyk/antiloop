@@ -32,7 +32,7 @@ This produces hierarchy, reproduction, scale-free topology, and lazy evaluation 
 
 ## The blindness theorem
 
-The key formal result. An entity distinguishing D < s^k input patterns from k connections must revisit an effective state within C × D + 1 steps. Hierarchical encoding is exponentially better than flat encoding. This makes restructuring practically inevitable, not chosen. Proved for worst case; general case is open (O9).
+The key formal result. An entity distinguishing D < s^k input patterns from k connections must revisit an effective state within C × D + 1 steps (worst case). Under stochastic inputs, expected loop time is Θ(√(C · D_eff)) where D_eff = 1/Σ Q(j)² measures encoding quality. Hierarchical encoding is exponentially better than flat encoding in both cases. See `paper/blindness_theorem_general.md` for the general case proof.
 
 ## Simulation results
 
@@ -44,14 +44,33 @@ The key formal result. An entity distinguishing D < s^k input patterns from k co
 
 It is not physics — no force laws, no constants, no dimensions. It is not a consciousness explanation. It is not the only model that could produce these features. The target is structural isomorphism, not strong isomorphism. See Section 10 of the paper for full disclaimers.
 
+## Running experiments
+
+```bash
+pip install numpy networkx matplotlib scipy powerlaw
+
+python -m simulation.run <experiment> --quick   # 60s,  3 seeds
+python -m simulation.run <experiment>           # 300s, 10 seeds
+python -m simulation.run <experiment> --long    # 900s, 30 seeds (publishable)
+```
+
+Experiments auto-discover from `simulation/experiments/`. Any `.py` file with a `run()` function and a `TITLE` string is a valid experiment. GUI progress window is shown when available.
+
 ## Repository structure
 
 ```
 antiloop/
-├── paper/lazy_universe_v4.md   — the current paper (authoritative)
-├── open_problems.md            — O1–O9 for v4
-├── archive/                    — historical material (v01/v02 theory, essays, old simulations)
-└── logo/                       — the antylope
+├── paper/
+│   ├── lazy_universe_v4.md             — the current paper (authoritative)
+│   └── blindness_theorem_general.md    — O9 general case proof
+├── simulation/
+│   ├── run.py                          — experiment runner (--quick/--long)
+│   ├── gui.py                          — progress window
+│   ├── experiments/                    — auto-discovered experiments
+│   └── shared/                         — common utilities
+├── open_problems.md                    — O1–O9 for v4
+├── archive/                            — historical material
+└── logo/                               — the antylope
 ```
 
 ## Authors

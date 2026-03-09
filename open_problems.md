@@ -28,9 +28,9 @@ Nine problems for the current framework. Numbered O1–O9 to match the paper.
 
 These are load-bearing issues that must be addressed before building more structure:
 
-1. **Variation mechanism.** The blindness theorem proves hierarchical encoding is better. The selection argument says flat encoders die young. But where does variation come from? If all children inherit the parent's encoding, all encodings are flat forever. Either define a source of variation or acknowledge this as a gap equal to O3.
+1. ~~**Variation mechanism.**~~ **Resolved.** Children start blank — M1 creates a new system, not a copy. Different network positions produce different inputs, hence different effective encodings. Variation is automatic. See paper Section 2.4.
 
-2. **Child complexity guarantee.** The paper claims children are "at least one comparison level more complex than the parent." This is stated but not proved. Why can't a child start at depth zero?
+2. **Child complexity guarantee.** The paper claims children are "at least one comparison level more complex than the parent." With "children start blank," children start at depth zero and deepen under Pigeonhole 2. The hierarchy still builds, but the guaranteed generational increase is unsupported. Consider dropping or weakening the claim.
 
 ---
 

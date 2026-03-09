@@ -92,6 +92,10 @@ The ratio tells the story. A flat encoder gets C² effective states out of conne
 
 The consequence: hierarchical encoding is not an operation that the entity "chooses." It is a selection effect. Any entity whose encoding is flat exhausts its effective states almost immediately and is forced to spawn while still shallow and simple. Entities with hierarchical encodings last exponentially longer. Over time, the surviving population is dominated by hierarchical encoders — not because anyone chose it, but because those are the ones that last.
 
+**Where the variation comes from.** Selection requires variation — some entities must have flat encoding and others hierarchical. M1 provides this without any additional mechanism. A spawned child is a *new* finite deterministic system (A1), not a copy of the parent. The child starts blank: its own state space, its own transition function, no inherited encoding. Since different children occupy different positions in the network, they receive different inputs and develop different effective encodings. The effective number of input distinctions D_eff depends on how the child's transition function responds to the inputs it actually receives. Variation across the population is automatic — it comes from network position diversity, not from mutation or randomness.
+
+*Status: the selection argument is now complete. The blindness theorem provides the fitness landscape (higher D_eff → longer trajectory). M1 provides the variation (children are new systems in diverse positions). No additional mechanism is required.*
+
 *Status: the theorem is proved for the worst case. The general case — exact bounds as a function of environmental dynamics, not just worst case — is open (O9). But the worst case is sufficient: flat encoding is strictly worse than hierarchical encoding by a factor that grows exponentially with the number of connections. This makes restructuring not merely advantageous but, for any entity with nontrivial connectivity, practically inevitable.*
 
 ### 2.5 The Encoding Saturates
@@ -104,7 +108,7 @@ Could the entity manage the problem differently? In principle, if disconnection 
 
 ### 2.6 The Entity Spawns Again
 
-The anti-loop rule still applies. Internal expansion is blocked (A3). The encoding is maxed out (2.5). The only operation is A4: spawn. The child has its own state, its own bounded memory, its own encoding. It compresses a region of the parent's input space and feeds the result back through the connection that spawning creates (2.2) — turning an unmanageable flood of input into one digestible channel.
+The anti-loop rule still applies. Internal expansion is blocked (A3). The encoding is maxed out (2.5). The only operation is A4: spawn. The child is a new finite deterministic system — it starts blank, with its own state space and its own transition function, not a copy of the parent. It receives input from the parent through the connection that spawning creates (2.2). From the parent's perspective, the child compresses a region of the parent's input space and feeds back one digestible channel.
 
 The child exists because the parent had no other way to keep obeying the rule.
 
@@ -156,7 +160,7 @@ These criteria may be wrong. They are proposed as falsifiable targets, not estab
 
 ### 3.4 Reproduction
 
-Every entity reproduces. This is not natural selection. It is not an optimization. It is Pigeonhole 3: a saturated encoding in bounded memory has no other move under A4. The child is at least one comparison level more complex than the parent, guaranteeing each generation outlasts the previous one.
+Every entity reproduces. This is not natural selection. It is not an optimization. It is Pigeonhole 3: a saturated encoding in bounded memory has no other move under A4. The child starts blank — a new system with its own transition function — and deepens its encoding under the same loop pressure that forced the parent to spawn. Each generation does not inherit complexity; it builds its own, driven by the inputs available at its network position.
 
 ### 3.5 Edges That Carry Information
 
@@ -252,7 +256,7 @@ All claims in Sections 3–5 are supported by simulation. Code and data are in t
 | 5 | Connections → exponential input space | Combinatorics |
 | 6 | Flat encoding fails under exponential input | Pigeonhole 2 |
 | 7 | Indistinguishable inputs reduce effective state space, accelerating loop pressure | Proved (restricted case; general case = O9) |
-| 8 | Hierarchical encoding is a selection effect: flat encoders loop too fast to persist | Derived from 6–7 |
+| 8 | Hierarchical encoding is a selection effect: flat encoders loop too fast to persist | Derived from 6–7; variation from M1 (children start blank, network position diversity) |
 | 9 | Finite encoding + growing connections → overwhelmed | Pigeonhole 3 |
 | 10 | Spawning is the only external operation (A4) | Axiom |
 | 11 | Cycle repeats → hierarchy | Structural recursion |

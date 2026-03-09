@@ -4,17 +4,17 @@
   <img src="logo/antiloop_logo.svg" alt="antiloop logo" width="600"/>
 </p>
 
-**Deriving node deceleration in network growth from finite automata under a no-repeat constraint.**
+**A sufficient condition for degree-dependent deceleration in network growth from finite automata under a no-repeat constraint.**
 
 ---
 
-## The anti-loop theorem
+## The idea
 
-An automaton with C states and encoding quality D must revisit an effective state within C × D + 1 steps (pigeonhole). Flat encoding gives D = C regardless of connectivity. Hierarchical encoding gives D = C^k. Under spawning-on-loop, well-connected nodes reproduce exponentially slower. This is anti-preferential attachment — derived, not assumed.
+Nodes are Mealy machines with encoding functions that compress neighbor inputs. Under a no-repeat constraint (no revisiting effective states), the encoding's discriminability determines how long a node runs before it must spawn. Hierarchical encoding (D = C^k) makes well-connected nodes slower. Flat encoding (D = C) does not. The state-space bound is pigeonhole; the application to network growth is the contribution.
 
 ## Central result
 
-Inter-spawn intervals jump **8.9x** from degree 1 to degree 2 under polynomial hashing (10 seeds, 1000 nodes, C=256). Under flat encoding, intervals are constant. A random-spawning control (same encoding, fixed-probability spawn) also shows constant intervals — proving deceleration requires the anti-loop constraint. Three hash functions tested; result is robust (spread < 0.1).
+A random-spawning control — hierarchical encoding but fixed-probability spawn instead of loop detection — shows constant intervals across all degrees (alpha = 2.86). The same encoding with loop-triggered spawning shows intervals jumping **8.9x** from degree 1 to degree 2. This isolates the no-repeat constraint as the necessary mechanism. Three hash functions tested; result is robust. Distributions are not strict power laws (lognormal fits better per CSN testing).
 
 Paper: [`paper/antiloop_short.md`](paper/antiloop_short.md)
 

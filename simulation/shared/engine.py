@@ -18,11 +18,22 @@ import time
 import networkx as nx
 import numpy as np
 
-# Try to use CuPy for GPU-accelerated table lookups
+# Try to use CuPy for GPU-accelerated table lookups.
+# CUDA_PATH must be set BEFORE importing cupy (it caches at import time).
+import os
+if not os.environ.get("CUDA_PATH"):
+    try:
+        import nvidia.cuda_nvrtc
+        os.environ["CUDA_PATH"] = nvidia.cuda_nvrtc.__path__[0]
+    except (ImportError, IndexError, AttributeError):
+        pass
+
 try:
     import cupy as cp
+    # Validate CuPy can actually compile kernels (not just import)
+    _ = cp.arange(2)
     HAS_CUDA = True
-except ImportError:
+except Exception:
     cp = None
     HAS_CUDA = False
 
@@ -97,6 +108,7 @@ class SpawnModel:
                 self._gpu_tables = cp.asarray(self.tables[:self.n_nodes])
                 self._use_gpu = True
             except Exception:
+                self._gpu_tables = None
                 self._use_gpu = False
         else:
             self._use_gpu = False

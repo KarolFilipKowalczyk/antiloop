@@ -16,8 +16,54 @@ from simulation.shared.analysis import (
 TITLE = "O4 Spawn Topology"
 
 
+def _calibrate(mem_bits, max_nodes, progress):
+    """Run a quick probe to measure throughput and auto-scale max_nodes.
+
+    Runs a short simulation (max 5s or max_nodes, whichever comes first),
+    measures nodes/second, and returns the calibrated max_nodes that would
+    fill the target time per seed.
+    """
+    probe_limit = 5.0  # seconds
+    t0 = time.time()
+    G, nodes, growth_log = run_spawn_model(
+        mem_bits=mem_bits, max_nodes=max_nodes, seed=9999,
+        time_limit=probe_limit,
+    )
+    elapsed = time.time() - t0
+    n_reached = G.number_of_nodes()
+
+    if elapsed < 0.1:
+        # Too fast to measure — extrapolate conservatively
+        nodes_per_sec = n_reached / 0.1
+    else:
+        nodes_per_sec = n_reached / elapsed
+
+    return n_reached, elapsed, nodes_per_sec
+
+
 def run(progress, out_dir, n_seeds, max_nodes, mem_bits, time_budget, **_):
     time_per_seed = time_budget / n_seeds
+
+    # Calibration: if default max_nodes finishes too fast, scale up
+    progress.update(0, n_seeds, "Calibrating", "Measuring throughput...")
+    n_probe, t_probe, nps = _calibrate(mem_bits, max_nodes, progress)
+
+    if t_probe < time_per_seed * 0.5:
+        # Simulation finishes in less than half the budget — scale up
+        # Target: fill 80% of per-seed budget (leave margin for analysis)
+        target_time = time_per_seed * 0.8
+        calibrated_nodes = int(nps * target_time)
+        # At least the requested max_nodes, at most 100x
+        calibrated_nodes = max(max_nodes, min(calibrated_nodes, max_nodes * 100))
+        progress.log(f"  Calibration: {n_probe} nodes in {t_probe:.1f}s "
+                     f"({nps:.0f} nodes/s)")
+        progress.log(f"  Auto-scaling: {max_nodes} -> {calibrated_nodes} nodes "
+                     f"(target {target_time:.0f}s/seed)")
+        max_nodes = calibrated_nodes
+    else:
+        progress.log(f"  Calibration: {n_probe} nodes in {t_probe:.1f}s — "
+                     f"keeping {max_nodes} nodes")
+
     progress.log(f"O4 Spawn Topology: {n_seeds} seeds, {max_nodes} nodes, "
                  f"{mem_bits}-bit FSM, {time_budget}s budget ({time_per_seed:.0f}s/seed)")
 
@@ -37,7 +83,7 @@ def run(progress, out_dir, n_seeds, max_nodes, mem_bits, time_budget, **_):
         # Distribute remaining time evenly across remaining seeds
         seed_limit = remaining / seeds_left
         progress.update(i, n_seeds, "Running seeds",
-                        f"Seed {i+1}/{n_seeds} (seed={seed}, {seed_limit:.0f}s budget)")
+                        f"Seed {i+1}/{n_seeds} ({max_nodes} nodes, {seed_limit:.0f}s budget)")
 
         # Antiloop spawn model
         G, nodes, growth_log = run_spawn_model(

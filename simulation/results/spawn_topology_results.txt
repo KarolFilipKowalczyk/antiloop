@@ -1,19 +1,19 @@
 ============================================================
 O4: Spawn Model Topology — Scale-Free Test
 ============================================================
-Seeds completed: 3/3
+Seeds completed: 10/10
 Nodes per graph: 500
 Memory: 8 bits (256 states)
 
 ANTILOOP SPAWN MODEL:
-  alpha = 1.894 +/- 0.247
-  range: [1.674, 2.239]
-  power_law > exponential:          3/3
-  power_law > lognormal:            0/3
-  power_law > stretched_exponential: 1/3
+  alpha = 2.102 +/- 0.245
+  range: [1.674, 2.434]
+  power_law > exponential:          10/10
+  power_law > lognormal:            2/10
+  power_law > stretched_exponential: 8/10
 
 RANDOM TREE CONTROL:
-  alpha = 2.887 +/- 0.037
+  alpha = 2.872 +/- 0.037
 
 Per-seed detail:
   antiloop seed=1000:
@@ -31,6 +31,41 @@ Per-seed detail:
     vs exponential          R=+2.441  p=0.0146  power_law BETTER **
     vs lognormal            R=-0.586  p=0.5581  lognormal BETTER ns
     vs stretched_exponential R=-0.527  p=0.5982  stretched_exponential BETTER ns
+  antiloop seed=1003:
+    alpha = 2.420 +/- 0.367  (xmin = 9, n_tail = 15)
+    vs exponential          R=+5.160  p=0.0000  power_law BETTER ***
+    vs lognormal            R=-1.033  p=0.3018  lognormal BETTER ns
+    vs stretched_exponential R=+1.702  p=0.0888  power_law BETTER ns
+  antiloop seed=1004:
+    alpha = 2.192 +/- 0.281  (xmin = 7, n_tail = 18)
+    vs exponential          R=+3.339  p=0.0008  power_law BETTER ***
+    vs lognormal            R=-1.028  p=0.3038  lognormal BETTER ns
+    vs stretched_exponential R=+0.614  p=0.5392  power_law BETTER ns
+  antiloop seed=1005:
+    alpha = 2.434 +/- 0.348  (xmin = 9, n_tail = 17)
+    vs exponential          R=+5.045  p=0.0000  power_law BETTER ***
+    vs lognormal            R=-1.003  p=0.3157  lognormal BETTER ns
+    vs stretched_exponential R=+1.785  p=0.0742  power_law BETTER ns
+  antiloop seed=1006:
+    alpha = 2.081 +/- 0.248  (xmin = 6, n_tail = 19)
+    vs exponential          R=+2.739  p=0.0062  power_law BETTER ***
+    vs lognormal            R=-0.057  p=0.9547  lognormal BETTER ns
+    vs stretched_exponential R=+0.201  p=0.8405  power_law BETTER ns
+  antiloop seed=1007:
+    alpha = 2.132 +/- 0.292  (xmin = 8, n_tail = 15)
+    vs exponential          R=+2.886  p=0.0039  power_law BETTER ***
+    vs lognormal            R=+0.017  p=0.9865  power_law BETTER ns
+    vs stretched_exponential R=+0.287  p=0.7738  power_law BETTER ns
+  antiloop seed=1008:
+    alpha = 2.208 +/- 0.277  (xmin = 7, n_tail = 19)
+    vs exponential          R=+3.400  p=0.0007  power_law BETTER ***
+    vs lognormal            R=+0.294  p=0.7689  power_law BETTER ns
+    vs stretched_exponential R=+0.429  p=0.6683  power_law BETTER ns
+  antiloop seed=1009:
+    alpha = 1.866 +/- 0.199  (xmin = 2, n_tail = 19)
+    vs exponential          R=+5.212  p=0.0000  power_law BETTER ***
+    vs lognormal            R=-1.053  p=0.2923  lognormal BETTER ns
+    vs stretched_exponential R=+2.114  p=0.0345  power_law BETTER **
 
   control seed=1000:
     alpha = 2.851 +/- 0.118  (xmin = 2, n_tail = 247)
@@ -47,3 +82,38 @@ Per-seed detail:
     vs exponential          R=-4.710  p=0.0000  exponential BETTER ***
     vs lognormal            R=-3.743  p=0.0002  lognormal BETTER ***
     vs stretched_exponential R=-3.876  p=0.0001  stretched_exponential BETTER ***
+  control seed=1003:
+    alpha = 2.846 +/- 0.117  (xmin = 2, n_tail = 250)
+    vs exponential          R=-4.057  p=0.0000  exponential BETTER ***
+    vs lognormal            R=-3.534  p=0.0004  lognormal BETTER ***
+    vs stretched_exponential R=-3.601  p=0.0003  stretched_exponential BETTER ***
+  control seed=1004:
+    alpha = 2.866 +/- 0.118  (xmin = 2, n_tail = 252)
+    vs exponential          R=-4.425  p=0.0000  exponential BETTER ***
+    vs lognormal            R=-3.690  p=0.0002  lognormal BETTER ***
+    vs stretched_exponential R=-3.923  p=0.0001  stretched_exponential BETTER ***
+  control seed=1005:
+    alpha = 2.880 +/- 0.118  (xmin = 2, n_tail = 252)
+    vs exponential          R=-3.640  p=0.0003  exponential BETTER ***
+    vs lognormal            R=-3.330  p=0.0009  lognormal BETTER ***
+    vs stretched_exponential R=-3.519  p=0.0004  stretched_exponential BETTER ***
+  control seed=1006:
+    alpha = 2.812 +/- 0.116  (xmin = 2, n_tail = 244)
+    vs exponential          R=-3.784  p=0.0002  exponential BETTER ***
+    vs lognormal            R=-3.433  p=0.0006  lognormal BETTER ***
+    vs stretched_exponential R=-3.607  p=0.0003  stretched_exponential BETTER ***
+  control seed=1007:
+    alpha = 2.863 +/- 0.118  (xmin = 2, n_tail = 249)
+    vs exponential          R=-2.983  p=0.0029  exponential BETTER ***
+    vs lognormal            R=-3.083  p=0.0021  lognormal BETTER ***
+    vs stretched_exponential R=-3.212  p=0.0013  stretched_exponential BETTER ***
+  control seed=1008:
+    alpha = 2.938 +/- 0.121  (xmin = 2, n_tail = 258)
+    vs exponential          R=-2.929  p=0.0034  exponential BETTER ***
+    vs lognormal            R=-3.040  p=0.0024  lognormal BETTER ***
+    vs stretched_exponential R=-3.128  p=0.0018  stretched_exponential BETTER ***
+  control seed=1009:
+    alpha = 2.857 +/- 0.117  (xmin = 2, n_tail = 251)
+    vs exponential          R=-4.209  p=0.0000  exponential BETTER ***
+    vs lognormal            R=-3.562  p=0.0004  lognormal BETTER ***
+    vs stretched_exponential R=-3.730  p=0.0002  stretched_exponential BETTER ***

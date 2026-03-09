@@ -1,0 +1,28 @@
+============================================================
+O5: Phase Boundary Validation
+============================================================
+Seeds completed: 1/1
+Nodes per graph: 10000
+Memory: 6 bits (64 states)
+
+PHASE BOUNDARIES:
+  P1->P2 (peak spawn rate):
+    step:     114 +/- 0
+    fraction: 0.481 +/- 0.000
+  P2->P3 (per-capita rate < 1/N):
+    step:     124 +/- 0
+    fraction: 0.523 +/- 0.000
+    reached:  1/1 seeds
+
+DEPTH STATISTICS:
+  Max tree depth:    5.0 +/- 0.0
+  Final median depth: 3.00 +/- 0.00
+
+THREE-PHASE PATTERN:
+  CONFIRMED in 1/1 seeds
+  Phase 1 (expansion):    steps 0 -- 114
+  Phase 2 (deceleration): steps 114 -- 124
+  Phase 3 (structure):    steps 124+
+
+Per-seed detail:
+  seed=2000: 10000 nodes, P12=114, P23=124, max_depth=5, median_depth=3.0

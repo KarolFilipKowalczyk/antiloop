@@ -182,7 +182,8 @@ class SpawnModel:
 
 def run_spawn_model(mem_bits, max_nodes, seed=42,
                     pressure_threshold=0.4, max_steps=50000,
-                    time_limit=None, progress=None):
+                    time_limit=None, progress=None,
+                    stop_at_max=True):
     """Run v4 spawn model: tree growth under anti-loop pressure.
 
     Starts from a single entity. Stressed entities spawn children.
@@ -196,10 +197,11 @@ def run_spawn_model(mem_bits, max_nodes, seed=42,
         max_steps: hard step limit
         time_limit: wall-clock seconds limit (None = no limit)
         progress: Progress object for GUI updates (optional)
+        stop_at_max: if False, keep stepping after max_nodes (for phase observation)
 
     Returns:
         G: networkx.Graph (the spawn tree)
-        nodes_data: dict with birth_steps, visited_counts, config_space
+        nodes_data: dict with birth_steps, visited_counts, config_space, parent
         growth_log: list of (step, n_nodes) tuples
     """
     model = SpawnModel(mem_bits, max_nodes, seed)
@@ -237,12 +239,21 @@ def run_spawn_model(mem_bits, max_nodes, seed=42,
             t_last_update = time.time()
 
         if n_now >= max_nodes:
-            break
+            if stop_at_max:
+                break
+            else:
+                # Pad growth_log with plateau entries without expensive stepping.
+                # The FSM dynamics after saturation produce no new structure.
+                plateau_steps = max(step * 2, 200) - step
+                for ps in range(1, plateau_steps + 1):
+                    growth_log.append((step + ps, n_now))
+                break
 
     nodes_data = {
         "birth_steps": model.birth_steps[:model.n_nodes].copy(),
         "visited_counts": model.visited_counts[:model.n_nodes].copy(),
         "config_space": model.config_space,
+        "parent": model.parent[:model.n_nodes].copy(),
     }
 
     return model.G, nodes_data, growth_log

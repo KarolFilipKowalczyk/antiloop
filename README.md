@@ -49,12 +49,14 @@ It is not physics — no force laws, no constants, no dimensions. It is not a co
 ```bash
 pip install numpy networkx matplotlib scipy powerlaw
 
-python -m simulation.run <experiment> --quick   # 60s,  3 seeds
-python -m simulation.run <experiment>           # 300s, 10 seeds
-python -m simulation.run <experiment> --long    # 900s, 30 seeds (publishable)
+python -m simulation.run <experiment> --scale 0   # 15s,  1 seed  (smoke test)
+python -m simulation.run <experiment> --quick      # 60s,  3 seeds
+python -m simulation.run <experiment>              # 300s, 10 seeds (default)
+python -m simulation.run <experiment> --long       # 900s, 30 seeds (publishable)
+python -m simulation.run <experiment> --scale 4    # 3600s, 30 seeds, 2k nodes, 10-bit (deep)
 ```
 
-Experiments auto-discover from `simulation/experiments/`. Any `.py` file with a `run()` function and a `TITLE` string is a valid experiment. GUI progress window is shown when available.
+Scale presets control time, seeds, nodes, and mem_bits together. Individual flags (`--time`, `--seeds`, `--nodes`, `--mem`) override any preset. Experiments auto-discover from `simulation/experiments/`. GUI progress window with CUDA detection is shown when available.
 
 ## Repository structure
 

@@ -1,209 +1,170 @@
-# CLAUDE.md — Project context for Claude Code
+# CLAUDE.md — Project Instructions for Claude Code
 
 ## What is antiloop?
 
-A formal framework deriving consciousness, ethics, and network topology from three axioms and one constraint: **don't loop, don't randomize**.
+A minimal formal framework that derives hierarchy, reproduction, scale-free topology, and lazy evaluation from three axioms and one modeling choice. The project name is a bilingual pun: antiloop / antylopa (Polish for antelope). Logo: a geometric running antelope whose trail never crosses itself.
 
-Core insight: any finite deterministic system must eventually repeat (pigeonhole principle). If experience requires novelty, repetition is experiential death. The only escape is growth. This single constraint — avoid loops while maintaining structure — produces scale-free networks, a complete ethical system, and speculative interpretations of time, space, and physical forces.
+**The project has gone through multiple versions.** Old material (T1–T6, consciousness bands, Assumption N) has been archived. The current state of the theory is in `paper/lazy_universe_v4.md`.
 
-## Project origin
+## Current axioms (v4 — authoritative)
 
-Developed through conversation between Karol Kowalczyk and Claude (Anthropic) on March 6, 2026. The axioms, core intuitions, and philosophical interpretation are Karol's. Formalization and simulation were collaborative. Adversarial review was performed by a separate Claude instance role-playing a finite model theorist (Prof. Jerzy Tyszkiewicz, MIMUW).
+**Axiom 1 (Existence).** There exists a finite deterministic system — a set of states S, a transition function δ: S × I → S where I is the set of possible inputs, and an initial state s₀.
+
+**Axiom 2 (Anti-loop).** The system's trajectory (s₀, s₁, s₂, …) visits each state at most once.
+
+**Axiom 3 (Boundedness).** |S| is finite and cannot increase.
+
+**Modeling choice M1 (Spawn).** When the system has exhausted all trajectories available within its current input set, it may create a new finite deterministic system (child) whose output becomes part of the parent's input set.
+
+A1–A3 are mathematical constraints. M1 is a mechanism. Keep them separate. This allows exploring alternative mechanisms (merging, pruning, interference) without changing the axioms.
+
+## What the axioms produce
+
+From A1–A3 alone (provable):
+- Trajectory length ≤ |S| (pigeonhole)
+- k connections with s-valued signals → s^k input patterns (combinatorics)
+- Hierarchical encoding gives exponentially more effective states than flat encoding (blindness theorem, proved for worst case)
+
+From A1–A3 + M1 (derived):
+- Spawning is forced when effective states are exhausted
+- Each spawn creates a connection (input channel)
+- Three-pigeonhole cycle produces hierarchy
+- Degree ∝ age → scale-free topology
+- Lazy evaluation: only active comparisons contribute to loop avoidance
+- Consensus: shared comparisons → matter; unique comparisons → mind
+
+## The four design goals
+
+The axiom set is designed to satisfy four criteria:
+1. **Big-bang expansion** from a single node — one entity spawns, children spawn, rapid early growth decelerates
+2. **Finite state machines as beings** — entities are finite deterministic systems with bounded memory under anti-loop constraint
+3. **Reproduction** — forced by Pigeonhole 3 (saturated encoding + bounded memory + only spawn available)
+4. **Structural isomorphism to the universe** — hierarchy, scale-free topology, three growth phases, lazy evaluation, consensus vs. private information. NOT quantitative physics (no force laws, no constants, no dimensions). The target is structural isomorphism, not strong isomorphism.
+
+## Three contributions (keep separate)
+
+The project contains three distinct contributions that should be treated as separate potential publications:
+
+**Contribution A: The LPAN model (empirical, publishable now).** FSM nodes on growing graphs, edges formed under loop pressure, MI excess as measurable signature. Key results: ρ ≈ 1.15 (29σ), α ≈ 2.47 (CSN confirmed, 30 seeds). Stands alone as network science. Does not require comparison trees or lazy evaluation.
+
+**Contribution B: The v4 framework (theoretical, needs more formal work).** Pigeonhole cascade, blindness theorem, comparison trees, lazy evaluation, matter as consensus. The formal core is the blindness theorem. Everything else is interpretation or simulation illustration. Needs: general-case blindness theorem (O9), variation mechanism for encoding, tetration proof (O3).
+
+**Contribution C: Philosophical interpretation (speculative, keep in margins).** Consciousness requires novelty, ethics as state-space dynamics, Fermi paradox. This is where the project started. It has been correctly pushed to the margins by adversarial review. Keep it there. Blog posts or companion essays, explicitly labeled as speculation.
+
+**Do not combine these into one document.** This has been the source of almost every structural problem in the project's history.
 
 ## Repository structure
 
 ```
 antiloop/
-├── CLAUDE.md                          ← you are here
-├── README.md                          
-├── logo/
-│   └── antiloop_logo.svg              — the antylope
-├── theory/
-│   ├── non_looping_existence_v02.md   — formal paper (CURRENT VERSION)
-│   ├── non_looping_existence.md       — v0.1 (historical, pre-review)
-│   └── complete_evaluation_package.md — theory + simulation + results for review
-├── essays/
-│   ├── ethics_essay.md                — accessible essay (English)
-│   └── fermi_essay.md                — Fermi paradox dissolution + simulation evidence
-├── simulation/
-│   ├── engine.py                      — shared core: FSMNode, hash functions, run_antiloop, controls
-│   ├── gui.py                         — ANTILOOP GUI progress window (always on)
-│   ├── run.py                         — unified entry point, auto-discovers experiments
-│   ├── experiments/
-│   │   ├── c1_complexity.py           — C1 consciousness band (inter-node MI) ✓ POSITIVE
-│   │   ├── c1_hash_robustness.py      — C1 hash robustness (XOR/SUM/PRODUCT) ✓ ROBUST
-│   │   ├── c2_suffering.py            — C2 suffering (edge loss) ✓ THRESHOLD POSITIVE
-│   │   ├── c2_targeted_suffering.py   — C2v2 targeted suffering (MI-ranked removal) ✓ POSITIVE (inverted)
-│   │   ├── c3_topology.py             — C3 scale-free topology ✓ POSITIVE (30 seeds, CSN)
-│   │   ├── complexity_thresholds.py   — unified O7+O14+O15: thresholds during growth ✓ POSITIVE (quick)
-│   │   ├── memory_scaling.py          — O17 memory scaling (C1 + C2 across mem_bits) ⏳ PARTIAL
-│   │   ├── coupling.py                — coupling constant test ✗ NEGATIVE
-│   │   └── o9_spectral.py             — O9 1/f spectral analysis ✗ NEGATIVE (v1, v2 planned)
-│   └── results/                       — plots and raw output
-└── open_problems.md                   — O1–O17, living document
+├── CLAUDE.md                    ← you are here
+├── README.md                    — v4 framework overview
+├── paper/
+│   └── lazy_universe_v4.md      — the current paper (authoritative)
+├── open_problems.md             — O1–O9 from v4 paper
+├── archive/
+│   ├── theory_v01.md            — original T1–T6 framework (historical)
+│   ├── theory_v02.md            — post-adversarial-review (historical)
+│   ├── complete_evaluation.md   — historical
+│   ├── essays/                  — ethics, Fermi (historical)
+│   ├── old_open_problems.md     — O1–O17 from early versions
+│   └── old_simulation/          — original LPAN engine, experiments, results, visualization
+└── logo/                        — the antylope
 ```
 
-## Theory summary
+New simulation directories (`simulation/spawn_model/`, `simulation/lpan_model/`, `simulation/consensus_model/`, `simulation/shared/`) should be created fresh when needed, not retrofitted from the archived LPAN engine.
 
-### Axioms
-- **A1 (Existence):** At least one state distinguishable from the empty set exists.
-- **A2 (Observer):** At least one state-transitioning entity exists.
-- **A3 (Sequentiality):** The entity must traverse at least two distinguishable states.
-- **Assumption N:** Experience requires novelty (new information). This is clearly labeled as an additional assumption, not derived from A1–A3.
+## Cleanup tasks (completed)
 
-### Theorem chain (T1–T6)
-T1: Finite isolated systems must loop (pigeonhole). T2: Loops are informationally degenerate. T3: If Assumption N, looping = no experience. T4: Finite isolation cannot sustain experience. T5: Growth is required (internal or relational). T6: Growth must be unbounded for any finite graph.
+All six cleanup tasks have been completed:
 
-### Key conjectures
-- **C1 (Consciousness band):** Inter-node MI ratio ρ = MI(edges)/MI(non-edges). Anti-loop ρ = 1.15, control ρ = 1.00. **POSITIVE (30 seeds, 2.1σ, hash-robust).**
-- **C2 (Suffering):** Random edge removal = no gradual contraction. **NEGATIVE for gradient**, T1 confirmed at total isolation (55-67% MI drop, 87-91% unique config drop).
-- **C2v2 (Targeted suffering):** Removing diverse (low growth-MI) connections hurts more than removing redundant (high growth-MI) ones. **POSITIVE (inverted, 30 seeds, 27/30 consistent, t=-8.61).** Follows from anti-loop logic: novelty-bearing edges are load-bearing.
-- **C3 (Scale-free topology):** Anti-loop produces alpha = 2.47 (classic range), power law preferred 30/30. **POSITIVE (CSN method, growing random control).**
+1. ✓ Old material archived (`theory/`, `essays/` → `archive/`)
+2. ✓ v4 paper in `paper/lazy_universe_v4.md`
+3. ✓ README.md rewritten around v4 framework
+4. ✓ `open_problems.md` rewritten with O1–O9 from v4
+5. ✓ Old simulation code moved to `archive/old_simulation/`
+6. ✓ No new simulation code written — old LPAN simulations preserved in archive
 
-### Speculative interpretations (honestly labeled)
-S1: Time = complexity growth. S2: Space = graph topology. S4: Physics = emergent mutual constraint. S6: Existence is mathematically necessary (within the axiom system).
+**O9 is the highest priority open problem.** The restricted-case blindness theorem is the strongest formal contribution. Extending it to environment-dependent dynamics would make the paper publishable in a theoretical CS venue.
 
-### Ethics
-One rule: don't collapse another entity's state space. Harm = state-space contraction (loops or noise). Good = state-space expansion. Maps cleanly onto all recognized forms of harm and flourishing.
+## Known formal gaps (address before new features)
 
-## Simulation status
+These are load-bearing problems. Do not build more structure on top of them.
 
-### C1 Consciousness band — POSITIVE
-- 30 seeds, 500 nodes, 8-bit FSM, XOR hash
-- MI ratio ρ = 1.15 (anti-loop) vs 1.00 (control), 2.1σ, 30/30 consistent
-- Hash robustness: XOR=1.14, SUM=1.15, PRODUCT=1.17 (all pass)
+1. **Variation mechanism.** The blindness theorem proves hierarchical encoding is better. The selection argument says flat encoders die young. But where does the variation come from? If all children inherit the parent's encoding, all encodings are flat forever. The selection argument requires a source of variation. Either define one or acknowledge this as a gap equal to the tetration proof.
 
-### C2 Suffering (random edge loss) — NEGATIVE (gradient), T1 CONFIRMED
-- 7 seeds, 500 nodes, 8-bit FSM, progressive edge removal
-- Partial removal (25-75%): no significant effect (1.6% hub MI loss at 75%)
-- Per-remaining-edge MI stays flat (~6.2) — no gradual contraction
-- Total isolation (100%): catastrophic (55-67% MI drop, 87-91% unique config drop)
-- Verdict: NEGATIVE for gradient suffering. T1 confirmed at isolation.
+2. **Child complexity guarantee.** v4 claims the child is "at least one comparison level more complex than the parent." This is stated but not proved. Why can't the child start at depth zero? If it can, the hierarchy still builds (children deepen under Pigeonhole 2), but the claim about guaranteed generational increase is unsupported.
 
-### C3 Scale-free topology — POSITIVE
-- 30 seeds, 500 nodes, 8-bit FSM, Clauset-Shalizi-Newman method
-- Anti-loop alpha = 2.47 +/- 0.14 (classic scale-free 2-3)
-- Power law preferred over exponential: 30/30 runs
-- Control alpha = 2.62 +/- 0.27 but exponential fits better
-- Hash-robust (spread = 0.04), insensitive to pressure threshold
-- Caveat: control also in scale-free alpha range; distinction is fit quality
+3. **Tetration proof (O3).** Tower-of-powers capacity growth is derived under specific assumptions but not formally proved. "Derived but not proved" means "conjectured with a plausibility argument." Say that.
 
-### C2v2 Targeted suffering — POSITIVE (inverted)
-- 30 seeds, 500 nodes, 8-bit FSM, moderate-degree targets (deg ~16)
-- MI ranked from GROWTH-PHASE trajectories (not fresh post-hoc dynamics)
-- Growth MI spread: 1.2-2.0x (mean 1.6x; early edges have more shared history)
-- Key finding: removing LOW growth-MI (diverse) edges hurts MORE
-  - High-MI removal: 98.6 MI at 50% removal (~0% loss)
-  - Low-MI removal: 92.5 MI at 50% removal (6.2% loss)
-  - Gap: -6.2% of baseline, t=-8.61, 27/30 consistent
-- Interpretation: high growth-MI = redundant (similar trajectories, expendable)
-  low growth-MI = diverse (novel information, load-bearing)
-- This follows directly from anti-loop axioms: novelty prevents loops,
-  so connections that bring novel information are the critical ones
-- Previous C2 (random removal) missed this because it treated all edges as equal
-- Bridges C1 (edges carry MI) with C2 (loss = contraction): the QUALITY of lost
-  edge matters, not just the quantity
+4. **Encoding uniqueness (O2).** The paper assumes comparison trees. Bounded-width circuits or DAGs could also provide logarithmic-access encoding. The blindness theorem applies to any hierarchical encoding, not specifically trees. Elevate this.
 
-### Memory Scaling (O17) — PARTIAL (quick, 2 seeds)
-- Tested mem_bits = 2, 4, 6, 8 (skip 10+ — MI computation too slow at config_space=1024)
-- MI ratio by memory level:
-  - mem_bits=2 (4 configs): AL=0.81, CT=1.33 — anti-loop BELOW control
-  - mem_bits=4 (16 configs): AL=0.81, CT=1.00 — anti-loop below control
-  - mem_bits=6 (64 configs): AL=0.91, CT=1.00 — approaching but still below
-  - mem_bits=8 (256 configs): AL=1.15, CT=1.00 — consciousness band emerges
-- Key finding: consciousness band requires minimum memory depth (~8 bits)
-  At low memory, nodes exhaust their state space so fast that anti-loop edges
-  carry LESS information than random topology. The band "turns on" between 6-8 bits.
-- C2 gradient test at mem_bits=2,4: still no gradient (binary collapse at isolation)
-- Peak is at boundary of tested range — may be higher. Needs 30-seed run.
-- Pressure: near 1.0 at mem_bits 2-6 (fully saturated), drops to 0.45 at mem_bits=8
+5. **Mutual constraint of shared comparisons (O6).** Physical laws constrain each other. Shared comparisons in the model merely coexist. Without mutual constraint, "matter as consensus" means "shared opinions," not "laws of physics." This is not a minor gap.
 
-### Coupling experiment — NEGATIVE
-- Measured fraction of transitions where neighbors changed outcome
-- Converges to ~0.879 by N=50, independent of graph size
-- This is a combinatorial artifact of the hash function, not an emergent constant
+## Derivation chain status (be honest)
 
-### Complexity Thresholds (O7+O14+O15) — POSITIVE (quick, 2 seeds)
-- Unified experiment: tracks MI ratio, power-law R, degree entropy, clustering, edge MI at 12 checkpoints during anti-loop growth
-- MI measured from actual growth-phase trajectories (not post-hoc dynamics on frozen snapshots)
-- Custom checkpointed growth loop snapshots graph + trajectories at each size threshold
-- Quick-run results (2 seeds, 500 nodes, 8-bit FSM):
-  - MI ratio: 3.5 at N=30, settles to 1.15 at N=500 (anti-loop); flat 1.0 (control)
-  - Consciousness band present from earliest checkpoint — starts HIGH and converges down
-  - Scale-free topology (R > 0) emerges at N ~ 72
-  - Anti-loop: 14 sharp transitions vs control: 10
-  - Final MI ratio: 1.148 vs 1.000, paired t=29.24, p=0.02
-- Key insight: MI ratio doesn't "turn on" — it starts very strong in small dense graphs
-  and settles to a stable band as the graph grows. The "leveling up" is in topology (R)
-  and clustering, not MI ratio.
-- Needs full 30-seed run for publishable results
+Classify every claim into exactly one of three tiers:
 
-## Priority work (what to build next)
+**Tier 1 — Proved:**
+- Finite + deterministic → must loop (pigeonhole, classical)
+- A loop produces no new states (determinism, classical)
+- Solitary entity under A2 + A3 → must spawn via M1 (elimination)
+- Spawning creates a connection (A1: environment in transition function)
+- Connections → exponential input space (combinatorics)
+- Flat encoding fails under exponential input (Pigeonhole 2)
+- Blindness theorem, restricted case: indistinguishable inputs reduce effective state space (proved)
 
-### 1. Full complexity thresholds run (30 seeds)
-- `python simulation/run.py complexity_thresholds --time 1800`
-- Quick run was positive; need statistical power for publishable results
+**Tier 2 — Conditionally derived (follows if specific assumptions hold):**
+- Hierarchical encoding is a selection effect (requires variation mechanism — unstated)
+- Finite encoding + growing connections → overwhelmed (Pigeonhole 3)
+- Cycle repeats → hierarchy (structural recursion, depends on Tier 2 items above)
+- Capacity grows by tetration (formal proof pending, O3)
 
-### 2. Full memory scaling run (30 seeds)
-- `python simulation/run.py memory_scaling --time 1800`
-- Quick run shows band turns on between 6-8 bits; need statistical power
-- Peak at boundary — consider adding mem_bits=9 to narrow the transition
+**Tier 3 — Conjectured with simulation support:**
+- Scale-free topology (α ≈ 2.18 spawn model, α ≈ 2.47 LPAN, CSN confirmed)
+- Three growth phases (boundary criteria proposed, untested)
+- Edges carry MI excess (ρ ≈ 1.15, 29σ, LPAN model)
+- Shared encodings → consensus structure (simulation)
 
-### 4. O9v2 spectral analysis
-- Graph-level observables during growth (not per-node post-growth)
-- Mathematically natural noise models (mutation, dropout)
-- Test for 1/f signatures
+**Never label a Tier 2 or Tier 3 claim as "derived" without qualification.**
 
-### 5. Distributed consciousness (O11)
-- Hub removal vs random node removal
-- Catastrophic MI collapse vs graceful degradation
+## Style and discipline
 
-## Technical notes
+- This project walks the line between formal mathematics and speculative interpretation. The key discipline is never confusing the two.
+- A clean negative result is worth more than a hand-wavy positive one. The coupling constant experiment and the C2 gradient experiment are in the archive for a reason.
+- When writing for this project, prefer clarity over impressiveness.
+- The "What This Paper Does Not Claim" section is the paper's best feature after the blindness theorem. Keep disclaimers prominent.
+- Do not use the word "must" in a dynamical sense ("the entity must restructure") when you mean it in a characterization sense ("any non-repeating trajectory through this space has this property"). The model has no agents. It has constraints on trajectories.
+- Drop or substantially weaken the Bell test analogy (Section 4.1 of v4) until an actual inequality is defined. The structural resemblance is superficial without one.
 
-### Python environment
-- numpy, networkx, matplotlib for simulation
-- `powerlaw` package needed for Clauset-Shalizi-Newman test (`pip install powerlaw`)
-- scipy for curve fitting and statistical tests
+## Technical stack
 
-### Simulation design principles
-- Every design choice must follow from the axioms, not from what we hope to find
-- Always include proper controls — wrong null models waste everyone's time
-- Report negative results honestly — the coupling experiment is in the repo for a reason
-- Cap node count to prevent exponential blowup (nodes under loop pressure spawn aggressively)
-- Limit stressed-node actions per step (max 5) to control growth rate
-- Use multiple random seeds (minimum 30 for publishable results)
-
-### Time budget calibration (IMPORTANT)
-Every experiment must respect its `time_budget` parameter. The calibration must measure the **full per-seed pipeline**, not just one component. For example, if a seed involves growth + MI computation + control + analysis, calibrate ALL of those together. A common bug is calibrating only the cheapest step (e.g., graph growth) and underestimating the total by 10-20x. After writing calibration code, verify that the experiment actually finishes within its budget by running with `--quick` and checking wall-clock time.
-
-### GUI rule
-Always run experiments with GUI. The `--nogui` flag has been removed. All experiments display a progress window showing phase, progress bar, and log output. If the system doesn't support GUI (headless, no display), the runner falls back to headless mode automatically. Never add a `--nogui` flag — the fallback handles it.
-
-### FSM node design
-- Node = (config_space, current_config, visited_set, transition_table)
-- Transition: T(config, input_hash) → new_config
-- Input hash: XOR of neighbor configs mod config_space (but test alternatives — this choice has hidden consequences, XOR is commutative and self-inverse)
-- Loop pressure: |visited| / |config_space|, threshold typically 0.7
-
-### Hash function warning
-XOR hash is commutative and self-inverse, meaning neighbor order doesn't matter and duplicate configs cancel. This is a strong structural assumption. Always test with at least SUM and PRODUCT alternatives to check whether results are hash-dependent.
-
-## Style and tone
-
-- This project walks the line between formal mathematics and philosophical speculation. The key discipline is **never confusing the two**.
-- Everything in Part I (T1–T6) must be rigorous. Everything in Part III (S1–S6) must be honestly labeled as speculation. Part II (C1–C3) is the active research frontier.
-- When writing for this project, prefer clarity over impressiveness. A clean negative result is worth more than a hand-wavy positive one.
+- Python: numpy, networkx, matplotlib, scipy, powerlaw
+- `powerlaw` package for Clauset-Shalizi-Newman testing (`pip install powerlaw`)
+- Minimum 30 seeds for publishable results
+- Always include proper controls and null models
+- Report negative results honestly
 
 ## Key references
 
-- Wheeler (1990): "It from bit"
-- Smolin (1992–2013): Cosmological natural selection, evolving laws
-- Tononi (2004): Integrated Information Theory (Φ)
-- Gell-Mann & Lloyd (2004): Effective complexity
 - Clauset, Shalizi & Newman (2009): Power-law distributions in empirical data
-- Barabási & Albert (1999): Scale-free networks
-- Okamoto (2023): Law of increasing organized complexity (arXiv:2302.07123)
-- Kowalczyk (2025): Consciousness as Collapsed Computational Time (DOI: 10.5281/zenodo.17556941)
+- Broido & Clauset (2019): Scale-free networks are rare
+- Krapivsky, Redner & Leyvraz (2000): Connectivity of growing random networks
+- Myhill (1957): Finite automata and the representation of events
+- Nerode (1958): Linear automaton transformations
+- Cover & Thomas (2006): Elements of Information Theory
+- Shannon (1948): A mathematical theory of communication
+- Kauffman (2000): Investigations
+- Tononi (2004): An information integration theory of consciousness
+
+## Priority work order
+
+1. ~~**Repo cleanup** (tasks 1–6)~~ — done
+2. **Prove the blindness theorem, general case (O9)** — this is the single highest-value task
+3. **Address the variation mechanism gap** — either define it or state it prominently as open
+4. **Scale testing (O4)** — CSN at 10⁴–10⁵ entities
+5. **Phase boundary validation (O5)** — test spawn-to-wire ratio and median encoding depth
+6. Everything else
 
 ## Contact
 

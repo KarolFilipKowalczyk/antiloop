@@ -29,7 +29,7 @@ From A1–A3 + M1 (derived):
 - Spawning is forced when effective states are exhausted
 - Each spawn creates a connection (input channel)
 - Three-pigeonhole cycle produces hierarchy
-- Degree ∝ age → scale-free topology
+- Degree ∝ age → heavy-tailed topology
 - Lazy evaluation: only active comparisons contribute to loop avoidance
 - Consensus: shared comparisons → matter; unique comparisons → mind
 
@@ -39,7 +39,7 @@ The axiom set is designed to satisfy four criteria:
 1. **Big-bang expansion** from a single node — one entity spawns, children spawn, rapid early growth decelerates
 2. **Finite state machines as beings** — entities are finite deterministic systems with bounded memory under anti-loop constraint
 3. **Reproduction** — forced by Pigeonhole 3 (saturated encoding + bounded memory + only spawn available)
-4. **Structural isomorphism to the universe** — hierarchy, scale-free topology, three growth phases, lazy evaluation, consensus vs. private information. NOT quantitative physics (no force laws, no constants, no dimensions). The target is structural isomorphism, not strong isomorphism.
+4. **Structural isomorphism to the universe** — hierarchy, heavy-tailed topology, three growth phases, lazy evaluation, consensus vs. private information. NOT quantitative physics (no force laws, no constants, no dimensions). The target is structural isomorphism, not strong isomorphism.
 
 ## Three contributions (keep separate)
 
@@ -126,7 +126,7 @@ Classify every claim into exactly one of three tiers:
 - Capacity grows by tetration (formal proof pending, O3)
 
 **Tier 3 — Conjectured with simulation support:**
-- Scale-free topology (α ≈ 2.18 spawn model, α ≈ 2.47 LPAN, CSN confirmed)
+- Heavy-tailed topology (α ≈ 2.05 spawn model at 44k nodes, lognormal-like per Broido-Clauset; α ≈ 2.47 LPAN)
 - Three growth phases (boundary criteria proposed, untested)
 - Edges carry MI excess (ρ ≈ 1.15, 29σ, LPAN model)
 - Shared encodings → consensus structure (simulation)

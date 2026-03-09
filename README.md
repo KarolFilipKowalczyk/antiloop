@@ -4,7 +4,7 @@
   <img src="logo/antiloop_logo.svg" alt="antiloop logo" width="600"/>
 </p>
 
-**A minimal formal framework that derives hierarchy, reproduction, and scale-free topology from three axioms and one modeling choice.**
+**A minimal formal framework that derives hierarchy, reproduction, and heavy-tailed topology from three axioms and one modeling choice.**
 
 ---
 
@@ -28,7 +28,7 @@ Three pigeonhole arguments cycle at every scale:
 2. Spawning creates connections → exponential input → flat encoding fails (Pigeonhole 2, **blindness theorem**)
 3. Hierarchical encoding saturates under growing connections → must spawn again (Pigeonhole 3)
 
-This produces hierarchy, reproduction, scale-free topology, and lazy evaluation — none of it assumed.
+This produces hierarchy, reproduction, heavy-tailed topology, and lazy evaluation — none of it assumed.
 
 ## The blindness theorem
 
@@ -36,7 +36,7 @@ The key formal result. An entity distinguishing D < s^k input patterns from k co
 
 ## Simulation results
 
-- **Scale-free topology:** α ≈ 2.18 (spawn model), α ≈ 2.47 (LPAN model, 30 seeds, CSN confirmed)
+- **Heavy-tailed topology:** spawn model α ≈ 2.05 at 44k nodes (30 seeds). Heavy-tailed and hub-dominated, better fit by lognormal than pure power-law at large scale — consistent with Broido & Clauset (2019). Random tree control: α ≈ 2.85 (massive separation). LPAN model: α ≈ 2.47 (30 seeds, CSN confirmed at small scale).
 - **MI excess on edges:** ρ ≈ 1.15 (29σ over 30 seeds) — anti-loop edges carry more mutual information than non-edges
 - **Three growth phases:** expansion → deceleration → structure, emerging from depth distribution
 

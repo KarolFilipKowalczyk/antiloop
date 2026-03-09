@@ -14,7 +14,7 @@ The entity runs out of states and must create something external. Creating a chi
 
 Within this framework, what we call matter is the set of encodings shared by many entities — consensus. What we call mind is the part that belongs to one entity alone. The universe computes only what some entity is actively encoding: a lazy reality where detail exists only where the rule demands it. We propose an experiment — within the model — that can distinguish "unbuilt" from merely "unobserved."
 
-Simulation produces scale-free topology (α ≈ 2.18), mutual information excess on edges (ρ ≈ 1.15, 29σ), three growth phases with proposed quantitative boundaries, and a power-law distribution of encoding-sharing.
+Simulation produces heavy-tailed topology (α ≈ 2.05 at 44k nodes, lognormal-like rather than strict power-law per Broido-Clauset testing), mutual information excess on edges (ρ ≈ 1.15, 29σ), three growth phases with proposed quantitative boundaries, and a power-law distribution of encoding-sharing.
 
 ---
 
@@ -132,11 +132,11 @@ The cycle above, driven entirely by the rule, produces the following. None of it
 
 Entities exist at multiple depths. Shallow ones make few comparisons, saturate fast, spawn quickly. Deep ones make many comparisons, fill slowly, dominate the later phases. Every entity is simultaneously a whole (its own encoding, its own trajectory) and a part (a component of something larger). There is no privileged level.
 
-### 3.2 Scale-Free Topology
+### 3.2 Heavy-Tailed Topology
 
-Older entities have more children (they have been spawning longer) and more connections (every spawn creates one). Degree is proportional to age. This produces a power-law degree distribution — the same pattern found in the internet, social networks, and biological systems.
+Older entities have more children (they have been spawning longer) and more connections (every spawn creates one). Degree is proportional to age. This produces a heavy-tailed degree distribution — the same pattern found in the internet, social networks, and biological systems.
 
-In simulation: α ≈ 2.18 (tree-depth model, Clauset-Shalizi-Newman methodology). The mechanism is not assumed. It falls out of the spawning rule.
+In simulation: α ≈ 2.05 at 44k nodes (tree-depth spawn model, Clauset-Shalizi-Newman methodology). The degree distribution is heavy-tailed and hub-dominated; at large scale it is better fit by lognormal than strict power-law, consistent with Broido & Clauset (2019) findings for most real-world networks. Random tree control shows α ≈ 2.85 with no heavy tail — the separation is unambiguous. The mechanism is not assumed. It falls out of the spawning rule.
 
 *Note on the wiring rule: every connection in the base model is a parent-child link created by spawning. Lateral connections — wiring to entities you didn't spawn — could emerge if signals propagate through the existing tree. Whether lateral wiring needs a separate mechanism or follows from signal propagation is open (O1).*
 
@@ -233,9 +233,9 @@ And the anti-loop rule produced all of it.
 
 ## 6. Simulation Results
 
-All claims in Sections 3–5 are supported by simulation. Code and data are in the accompanying repository. Current scale is ~3,000 entities. These results are preliminary. Large-scale validation is pending (O4).
+All claims in Sections 3–5 are supported by simulation. Code and data are in the accompanying repository.
 
-**Scale-free topology.** Tree-depth spawn model: α ≈ 2.18 (Clauset-Shalizi-Newman methodology). LPAN model with lateral wiring: α ≈ 2.47 (30 seeds). Both fall within the range seen in biological, social, and technological networks (typically α between 2 and 3).
+**Heavy-tailed topology.** Tree-depth spawn model at 44k nodes (30 seeds, auto-calibrated, CUDA-accelerated): α ≈ 2.05 ± 0.02. Power-law beats exponential (30/30 seeds at 500 nodes; 2–3/3 at 44k nodes), but lognormal and stretched exponential beat strict power-law at large scale (p < 0.0001). This is expected: Broido & Clauset (2019) found most real-world "scale-free" networks fail strict CSN testing at sufficient sample size. The scientifically precise claim is that antiloop produces a heavy-tailed, hub-dominated degree distribution near α ≈ 2 — sharply distinct from random trees (α ≈ 2.85, all alternatives beat power-law 30/30). LPAN model with lateral wiring: α ≈ 2.47 (30 seeds, small scale).
 
 **Mutual information excess.** LPAN edges carry about 15% more mutual information than non-edges (ρ ≈ 1.15). This is 29 standard deviations from zero over 30 seeds. Tested against three null models — random graphs, preferential-attachment graphs, and spawn-only topologies. None show the effect. The excess is specific to edges formed under loop pressure.
 
@@ -261,7 +261,7 @@ All claims in Sections 3–5 are supported by simulation. Code and data are in t
 | 10 | Spawning is the only external operation (A4) | Axiom |
 | 11 | Cycle repeats → hierarchy | Structural recursion |
 | 12 | Capacity grows by tetration | Derived (formal proof pending, O3) |
-| 13 | Scale-free topology | Simulation (α ≈ 2.18, CSN) |
+| 13 | Heavy-tailed topology (α ≈ 2.05, lognormal-like at scale) | Simulation (30 seeds, 44k nodes, Broido-Clauset) |
 | 14 | Three phases | Simulation (boundary criteria proposed, untested) |
 | 15 | Edges carry MI excess | Simulation (ρ ≈ 1.15, 29σ) |
 | 16 | Shared encodings → consensus structure | Simulation |

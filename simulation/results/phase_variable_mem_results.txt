@@ -1,0 +1,23 @@
+============================================================
+O5b: Variable Memory — Phase 2 Graduality Test
+============================================================
+Seeds completed: 3/3
+Nodes per graph: 10366
+Uniform: 8-bit (256 states)
+Variable: 4-8-bit (16-256 states)
+
+PHASE 2 DURATION (steps between P1->P2 and P2->P3):
+  Uniform:  15.0 +/- 0.0
+  Variable: 10.3 +/- 0.5
+
+  Ratio (variable/uniform): 0.69x
+  RESULT: No significant effect — Phase 2 remains sharp
+
+DEPTH STATISTICS:
+  Uniform  max depth: 4.0 +/- 0.0
+  Variable max depth: 8.3 +/- 0.9
+
+Per-seed detail:
+  seed=3000: uniform(10366n P12=360 P23=375) variable(10366n P12=86 P23=96)
+  seed=3001: uniform(10366n P12=350 P23=365) variable(10366n P12=76 P23=87)
+  seed=3002: uniform(10366n P12=349 P23=364) variable(10366n P12=70 P23=80)

@@ -44,13 +44,18 @@ class SpawnModel:
     Stores all node data in flat numpy arrays for batch stepping.
     Transition tables are stacked into a single 3D array so that
     all nodes can be stepped in one indexed operation.
+
+    When mem_bits_range is provided, each entity gets a random memory
+    size drawn uniformly from [mem_bits_range[0], mem_bits_range[1]].
+    Tables are allocated at the max size; smaller entities use a subset.
     """
 
-    def __init__(self, mem_bits, max_nodes, seed=42):
+    def __init__(self, mem_bits, max_nodes, seed=42, mem_bits_range=None):
         self.mem_bits = mem_bits
-        self.config_space = 2 ** mem_bits
+        self.config_space = 2 ** mem_bits  # max config space (for allocation)
         self.max_nodes = max_nodes
         self.rng = np.random.default_rng(seed)
+        self.mem_bits_range = mem_bits_range  # None = uniform, (lo, hi) = variable
 
         # Pre-allocate arrays for max_nodes
         C = self.config_space
@@ -61,6 +66,9 @@ class SpawnModel:
         self.effective_sets = [None] * max_nodes  # set of (config, hash) pairs
         self.looped = np.zeros(max_nodes, dtype=bool)  # True if effective state revisited
         self.birth_steps = np.zeros(max_nodes, dtype=np.int32)
+        # Per-node config space (all same if mem_bits_range is None)
+        self.node_config_spaces = np.full(max_nodes, C, dtype=np.int32)
+        self.node_mem_bits = np.full(max_nodes, mem_bits, dtype=np.int32)
 
         # Graph (tree)
         self.G = nx.Graph()
@@ -81,10 +89,25 @@ class SpawnModel:
     def _add_node(self, parent_id, step):
         """Add a blank child node."""
         nid = self.n_nodes
-        C = self.config_space
 
-        self.tables[nid] = self.rng.integers(0, C, size=(C, C), dtype=np.int32)
-        self.configs[nid] = self.rng.integers(0, C)
+        # Determine this node's memory size
+        if self.mem_bits_range is not None:
+            lo, hi = self.mem_bits_range
+            node_bits = int(self.rng.integers(lo, hi + 1))
+        else:
+            node_bits = self.mem_bits
+        node_C = 2 ** node_bits
+        self.node_config_spaces[nid] = node_C
+        self.node_mem_bits[nid] = node_bits
+
+        # Fill table within node's config space (rest stays zero)
+        C = self.config_space  # max allocation size
+        tbl = np.zeros((C, C), dtype=np.int32)
+        tbl[:node_C, :node_C] = self.rng.integers(0, node_C,
+                                                   size=(node_C, node_C),
+                                                   dtype=np.int32)
+        self.tables[nid] = tbl
+        self.configs[nid] = self.rng.integers(0, node_C)
         self.visited_sets[nid] = {int(self.configs[nid])}
         self.effective_sets[nid] = set()
         self.looped[nid] = False
@@ -116,7 +139,7 @@ class SpawnModel:
     def step_all(self):
         """Step all nodes in one vectorized operation."""
         N = self.n_nodes
-        C = self.config_space
+        ncs = self.node_config_spaces[:N]
 
         # Compute input hash for each node: XOR of neighbor configs
         hashes = np.zeros(N, dtype=np.int32)
@@ -127,7 +150,7 @@ class SpawnModel:
                 h ^= self.configs[p]
             for child in self.children[nid]:
                 h ^= self.configs[child]
-            hashes[nid] = h % C
+            hashes[nid] = h % ncs[nid]
 
         # Batch table lookup: new_config[i] = tables[i, configs[i], hashes[i]]
         cur = self.configs[:N]
@@ -175,7 +198,7 @@ class SpawnModel:
                 # (new child changes the input landscape)
                 self.looped[nid] = False
                 self.effective_sets[nid] = set()
-            elif self.visited_counts[nid] / self.config_space > pressure_threshold:
+            elif self.visited_counts[nid] / self.node_config_spaces[nid] > pressure_threshold:
                 stressed.append(nid)
         return stressed
 
@@ -183,7 +206,7 @@ class SpawnModel:
 def run_spawn_model(mem_bits, max_nodes, seed=42,
                     pressure_threshold=0.4, max_steps=50000,
                     time_limit=None, progress=None,
-                    stop_at_max=True):
+                    stop_at_max=True, mem_bits_range=None):
     """Run v4 spawn model: tree growth under anti-loop pressure.
 
     Starts from a single entity. Stressed entities spawn children.
@@ -198,13 +221,14 @@ def run_spawn_model(mem_bits, max_nodes, seed=42,
         time_limit: wall-clock seconds limit (None = no limit)
         progress: Progress object for GUI updates (optional)
         stop_at_max: if False, keep stepping after max_nodes (for phase observation)
+        mem_bits_range: tuple (lo, hi) for variable memory per entity, or None for uniform
 
     Returns:
         G: networkx.Graph (the spawn tree)
-        nodes_data: dict with birth_steps, visited_counts, config_space, parent
+        nodes_data: dict with birth_steps, visited_counts, config_space, parent, node_mem_bits
         growth_log: list of (step, n_nodes) tuples
     """
-    model = SpawnModel(mem_bits, max_nodes, seed)
+    model = SpawnModel(mem_bits, max_nodes, seed, mem_bits_range=mem_bits_range)
     t_start = time.time()
 
     growth_log = [(0, 1)]
@@ -254,6 +278,7 @@ def run_spawn_model(mem_bits, max_nodes, seed=42,
         "visited_counts": model.visited_counts[:model.n_nodes].copy(),
         "config_space": model.config_space,
         "parent": model.parent[:model.n_nodes].copy(),
+        "node_mem_bits": model.node_mem_bits[:model.n_nodes].copy(),
     }
 
     return model.G, nodes_data, growth_log

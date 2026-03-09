@@ -430,6 +430,195 @@ def run_lpan_model(mem_bits, max_nodes, seed=42,
     return model.G, nodes_data, growth_log, trajectories
 
 
+class AttentionModel:
+    """Parameter-free model where wiring emerges from dynamics.
+
+    Each entity starts attending only to its parent. When it loops
+    (effective state revisit), it takes external action: spawns a
+    child AND adds one new attention target. This mirrors M1:
+    external action is forced by anti-loop exhaustion.
+
+    Connections are permanent and symmetric: when i attends to j,
+    both use each other in their XOR hash computation (shared
+    environment per Section 2.2).
+
+    NEGATIVE RESULT: This model produces heavy-tailed topology
+    (alpha ~ 2.0-2.7) but NOT MI excess (rho ~ 0.94). The effective
+    state reset after looping severs trajectory continuity. MI excess
+    requires proactive wiring under partial pressure (LPAN threshold
+    < 1.0), which is not parameter-free.
+    """
+
+    def __init__(self, mem_bits, max_nodes, seed=42):
+        self.mem_bits = mem_bits
+        self.config_space = 2 ** mem_bits
+        self.max_nodes = max_nodes
+        self.rng = np.random.default_rng(seed)
+
+        C = self.config_space
+
+        self.tables = np.zeros((max_nodes, C, C), dtype=np.int32)
+        self.configs = np.zeros(max_nodes, dtype=np.int32)
+        self.effective_sets = [None] * max_nodes
+        self.looped = np.zeros(max_nodes, dtype=bool)
+        self.birth_steps = np.zeros(max_nodes, dtype=np.int32)
+
+        self.G = nx.DiGraph()
+        self.n_nodes = 0
+        self.parent = np.full(max_nodes, -1, dtype=np.int32)
+
+        # Symmetric neighbor sets for hash computation
+        self._neighbor_sets = [set() for _ in range(max_nodes)]
+
+        self._add_node(parent_id=-1, step=0)
+
+    def _add_node(self, parent_id, step):
+        """Add a new entity. Starts connected to parent only."""
+        nid = self.n_nodes
+        C = self.config_space
+
+        self.tables[nid] = self.rng.integers(0, C, size=(C, C), dtype=np.int32)
+        self.configs[nid] = self.rng.integers(0, C)
+        self.effective_sets[nid] = set()
+        self.looped[nid] = False
+        self.birth_steps[nid] = step
+
+        self.G.add_node(nid)
+        self.parent[nid] = parent_id
+
+        if parent_id >= 0:
+            self.G.add_edge(nid, parent_id)
+            self._neighbor_sets[nid].add(parent_id)
+            self._neighbor_sets[parent_id].add(nid)
+
+        self.n_nodes += 1
+        return nid
+
+    def _add_lateral_edge(self, nid):
+        """Add one random lateral edge for entity nid."""
+        current = self._neighbor_sets[nid] | {nid}
+        candidates = [n for n in range(self.n_nodes) if n not in current]
+        if not candidates:
+            return
+        target = int(self.rng.choice(candidates))
+        self.G.add_edge(nid, target)
+        self._neighbor_sets[nid].add(target)
+        self._neighbor_sets[target].add(nid)
+
+    def step_all(self):
+        """Step all nodes: hash from symmetric neighbors, check for loops."""
+        N = self.n_nodes
+        C = self.config_space
+
+        hashes = np.zeros(N, dtype=np.int32)
+        for nid in range(N):
+            h = 0
+            for nb in self._neighbor_sets[nid]:
+                h ^= self.configs[nb]
+            hashes[nid] = h % C
+
+        for nid in range(N):
+            eff = (int(self.configs[nid]), int(hashes[nid]))
+            if eff in self.effective_sets[nid]:
+                self.looped[nid] = True
+            else:
+                self.effective_sets[nid].add(eff)
+
+        cur = self.configs[:N]
+        self.configs[:N] = self.tables[np.arange(N), cur, hashes]
+
+    def get_loopers(self):
+        """Return entities that have looped. Reset their effective sets."""
+        loopers = []
+        for nid in range(self.n_nodes):
+            if self.looped[nid]:
+                loopers.append(nid)
+                self.looped[nid] = False
+                self.effective_sets[nid] = set()
+        return loopers
+
+
+def run_attention_model(mem_bits, max_nodes, seed=42,
+                        max_steps=50000, time_limit=None,
+                        progress=None, record_trajectories=False):
+    """Run parameter-free attention model.
+
+    When an entity loops (effective state revisit):
+    1. It adds one lateral edge (diversify input)
+    2. It spawns a child (M1)
+
+    No tunable parameters beyond mem_bits and max_nodes.
+
+    Returns:
+        G: networkx.DiGraph (attention/spawn edges)
+        nodes_data: dict
+        growth_log: list of (step, n_nodes, n_edges)
+        trajectories: dict[nid -> list[config]] or None
+    """
+    model = AttentionModel(mem_bits, max_nodes, seed)
+    t_start = time.time()
+
+    growth_log = [(0, 1, 0)]
+    t_last_update = t_start
+    trajectories = {0: [int(model.configs[0])]} if record_trajectories else None
+
+    for step in range(1, max_steps + 1):
+        now = time.time()
+        if time_limit and (now - t_start) > time_limit:
+            break
+
+        model.step_all()
+
+        if record_trajectories:
+            for nid in range(model.n_nodes):
+                if nid in trajectories:
+                    trajectories[nid].append(int(model.configs[nid]))
+
+        at_cap = model.n_nodes >= max_nodes
+        loopers = model.get_loopers()
+
+        for nid in loopers:
+            # Add lateral edge (diversify input)
+            model._add_lateral_edge(nid)
+
+            # Spawn child (M1)
+            if not at_cap and model.n_nodes < max_nodes:
+                new_id = model._add_node(parent_id=nid, step=step)
+                if record_trajectories:
+                    trajectories[new_id] = [int(model.configs[new_id])]
+                if model.n_nodes >= max_nodes:
+                    at_cap = True
+
+        n_now = model.n_nodes
+        n_edges = model.G.number_of_edges()
+        growth_log.append((step, n_now, n_edges))
+
+        if progress and (time.time() - t_last_update) >= 0.1:
+            progress.update_seed(min(n_now, max_nodes), max_nodes)
+            t_last_update = time.time()
+
+        # After cap: run extra steps for trajectory data, then stop
+        if at_cap and not loopers and step > 10:
+            for _ in range(50):
+                model.step_all()
+                if record_trajectories:
+                    for nid in range(model.n_nodes):
+                        if nid in trajectories:
+                            trajectories[nid].append(int(model.configs[nid]))
+                for nid in model.get_loopers():
+                    model._add_lateral_edge(nid)
+                growth_log.append((step, n_now, model.G.number_of_edges()))
+            break
+
+    nodes_data = {
+        "birth_steps": model.birth_steps[:model.n_nodes].copy(),
+        "config_space": model.config_space,
+        "parent": model.parent[:model.n_nodes].copy(),
+    }
+
+    return model.G, nodes_data, growth_log, trajectories
+
+
 def build_growing_random_control(growth_log, seed):
     """Build a control graph matching the LPAN growth trajectory.
 

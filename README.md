@@ -37,7 +37,7 @@ The key formal result. An entity distinguishing D < s^k input patterns from k co
 ## Simulation results
 
 - **Heavy-tailed topology:** spawn model α ≈ 2.05 at 44k nodes (30 seeds). Heavy-tailed and hub-dominated, better fit by lognormal than pure power-law at large scale — consistent with Broido & Clauset (2019). Random tree control: α ≈ 2.85 (massive separation). LPAN model: α ≈ 2.47 (30 seeds, CSN confirmed at small scale).
-- **MI excess on edges:** ρ ≈ 1.15 (29σ over 30 seeds) — anti-loop edges carry more mutual information than non-edges
+- **MI excess on edges:** ρ ≈ 1.15 (29σ over 30 seeds) under proactive wiring (LPAN). A parameter-free attention model produces heavy-tailed topology but NOT MI excess (ρ ≈ 0.98) — MI excess requires proactive wiring under partial pressure, not just anti-loop dynamics alone
 - **Three growth phases:** expansion -> transition -> plateau, confirmed 10/10 seeds. At 8-bit memory, Phase 2 is sharp (~16 steps). Phase 2 width scales as ~sqrt(C) with memory size (O5c), becoming an extended era at larger configuration spaces.
 
 ## What the model does NOT claim

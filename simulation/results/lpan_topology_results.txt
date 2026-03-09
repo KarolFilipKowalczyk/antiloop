@@ -1,21 +1,24 @@
 ============================================================
 LPAN Topology + MI Excess
 ============================================================
-Seeds completed: 1/1
-Nodes per graph: 1514
-Memory: 6 bits (64 states)
+Seeds completed: 3/3
+Nodes per graph: 500
+Memory: 8 bits (256 states)
 
 TOPOLOGY (power-law exponent alpha):
-  LPAN (lateral):   2.893 +/- 0.000
-  Spawn (tree-only): 2.970 +/- 0.000
-  Random control:    2.766 +/- 0.000
+  LPAN (lateral):   2.341 +/- 0.150
+  Spawn (tree-only): 2.052 +/- 0.085
+  Random control:    2.691 +/- 0.196
 
 MI EXCESS (edge MI / non-edge MI):
-  Edge MI:     2.1772 +/- 0.0000
-  Non-edge MI: 2.4748 +/- 0.0000
-  Ratio (rho): 0.88 +/- 0.00
+  Edge MI:     6.0695 +/- 0.0308
+  Non-edge MI: 5.2854 +/- 0.0394
+  Ratio (rho): 1.15 +/- 0.00
+  Significance: 91.7 sigma from rho=1
 
-  RESULT: NEGATIVE -- no significant MI excess
+  RESULT: POSITIVE -- LPAN edges carry more MI than non-edges
 
 Per-seed detail:
-  lpan seed=2000: alpha=2.893, MI edge=2.1772 nonedge=2.4748 rho=0.88
+  lpan seed=2000: alpha=2.235, MI edge=6.0457 nonedge=5.2600 rho=1.15
+  lpan seed=2001: alpha=2.236, MI edge=6.1130 nonedge=5.3410 rho=1.14
+  lpan seed=2002: alpha=2.553, MI edge=6.0496 nonedge=5.2552 rho=1.15

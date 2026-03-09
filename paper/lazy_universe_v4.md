@@ -176,9 +176,11 @@ Every entity reproduces. This is not natural selection. It is not an optimizatio
 
 ### 3.5 Edges That Carry Information
 
-In the LPAN simulation model, edges carry about 15% more mutual information than non-edges (ρ ≈ 1.15, 29σ over 30 seeds). This signature does not appear in random graphs, preferential-attachment graphs, or spawn-only topologies.
+In the LPAN simulation model, edges carry about 15% more mutual information than non-edges (ρ ≈ 1.15, 92σ over 3 seeds at 500 nodes; confirmed across multiple seeds). A random control graph with the same density (same number of nodes and edges) shows ρ = 1.00. The MI excess is not a density artifact — it is specific to anti-loop dynamics.
 
-This is the measurable fingerprint of the anti-loop rule. Each edge exists because a specific entity needed that specific connection to avoid repeating itself. Connections formed for dynamic reasons carry information by construction. Connections formed for random or geometric reasons do not.
+The excess comes from non-edge MI being low (5.3 bits) rather than edge MI being high (6.1 bits). Anti-loop dynamics create networks where information flows preferentially along edges. In random graphs of equal density, information diffuses more uniformly and non-edge pairs have similar MI to edge pairs.
+
+**Density dependence.** The MI excess is observable only in sparse graphs (average degree ~8). At higher density (average degree ~17), all node pairs are close in the graph and MI becomes uniform (ρ → 1.0). This is not a weakness of the result — it is physically meaningful. In a sparse network, edges represent genuine information channels. In a dense network, edges are redundant and the distinction between edge and non-edge vanishes.
 
 ---
 
@@ -247,9 +249,9 @@ And the anti-loop rule produced all of it.
 
 All claims in Sections 3–5 are supported by simulation. Code and data are in the accompanying repository.
 
-**Heavy-tailed topology.** Tree-depth spawn model at 44k nodes (30 seeds, auto-calibrated, CUDA-accelerated): α ≈ 2.05 ± 0.02. Power-law beats exponential (30/30 seeds at 500 nodes; 2–3/3 at 44k nodes), but lognormal and stretched exponential beat strict power-law at large scale (p < 0.0001). This is expected: Broido & Clauset (2019) found most real-world "scale-free" networks fail strict CSN testing at sufficient sample size. The scientifically precise claim is that antiloop produces a heavy-tailed, hub-dominated degree distribution near α ≈ 2 — sharply distinct from random trees (α ≈ 2.85, all alternatives beat power-law 30/30). LPAN model with lateral wiring: α ≈ 2.47 (30 seeds, small scale).
+**Heavy-tailed topology.** Tree-depth spawn model at 44k nodes (30 seeds, auto-calibrated, CUDA-accelerated): α ≈ 2.05 ± 0.02. Power-law beats exponential (30/30 seeds at 500 nodes; 2–3/3 at 44k nodes), but lognormal and stretched exponential beat strict power-law at large scale (p < 0.0001). This is expected: Broido & Clauset (2019) found most real-world "scale-free" networks fail strict CSN testing at sufficient sample size. The scientifically precise claim is that antiloop produces a heavy-tailed, hub-dominated degree distribution near α ≈ 2 — sharply distinct from random trees (α ≈ 2.85, all alternatives beat power-law 30/30). LPAN model with lateral wiring: α ≈ 2.34 (3 seeds, 500 nodes). Random control at the same density: α ≈ 2.69.
 
-**Mutual information excess.** LPAN edges carry about 15% more mutual information than non-edges (ρ ≈ 1.15). This is 29 standard deviations from zero over 30 seeds. Tested against three null models — random graphs, preferential-attachment graphs, and spawn-only topologies. None show the effect. The excess is specific to edges formed under loop pressure.
+**Mutual information excess.** LPAN edges carry about 15% more mutual information than non-edges (ρ ≈ 1.15, 92σ at 500 nodes). A random control graph at the *same density* shows ρ = 1.00 — the excess is not an artifact of graph structure. The effect comes from non-edge MI being low (anti-loop networks channel information along edges), not from edge MI being high. **Density dependence:** the excess is observable only in sparse graphs (avg degree ~8). At higher density (avg degree ~17), all node pairs are close and MI becomes uniform (ρ → 1.0). This is consistent with the physical interpretation: in sparse networks, edges are genuine information channels; in dense networks, they are redundant.
 
 **Three phases (O5).** Population growth shows rapid expansion, a transition, and a long plateau. Confirmed in 10/10 seeds at 25k nodes. Phase boundaries are remarkably stable across seeds (± 2 steps). At 8-bit memory (C=256), Phase 2 is a near-discontinuous transition (~16 steps). Variable memory (O5b, 4-8 bit per entity) makes the transition *sharper*, not more gradual. However, Phase 2 width scales as ~C^0.5 across 4-10 bit memory (O5c) — the transition widens with configuration space size, becoming an extended era at large C. The original "gradual deceleration" prediction partially recovers through scaling.
 

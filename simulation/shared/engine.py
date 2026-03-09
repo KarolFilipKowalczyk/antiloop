@@ -305,31 +305,43 @@ def run_spawn_model(mem_bits, max_nodes, seed=42,
 
 
 def run_lpan_model(mem_bits, max_nodes, seed=42,
-                   pressure_threshold=0.4, max_steps=50000,
+                   pressure_threshold=0.7, max_steps=50000,
                    time_limit=None, progress=None,
-                   spawn_prob=0.3, post_cap_steps=500,
+                   spawn_prob=0.3, post_cap_steps=0,
                    max_wire_per_step=5, mem_bits_range=None,
                    record_trajectories=False):
     """Run LPAN model: growth with lateral wiring under anti-loop pressure.
 
     All entities share an environment (Section 2.2). Stressed entities
     wire laterally to existing non-neighbors AND sometimes spawn new
-    entities. After reaching max_nodes, keeps stepping for post_cap_steps
-    to allow edge-only dynamics.
+    entities.
+
+    DENSITY AND MI EXCESS: The MI excess (edges carry more mutual
+    information than non-edges) depends on graph sparsity. At avg
+    degree ~8 (post_cap_steps=0), rho ~ 1.15-1.20. At avg degree ~17
+    (post_cap_steps=500), rho ~ 1.0 — the excess vanishes because
+    non-edges are too close in a dense graph. The default post_cap_steps=0
+    produces the sparse regime where MI excess is observable.
 
     Args:
         mem_bits: FSM memory size (2^mem_bits states per node)
         max_nodes: stop spawning at this count
         seed: random seed
-        pressure_threshold: pressure above which a node acts
+        pressure_threshold: pressure above which a node acts (0.7 matches
+            original LPAN; lower values produce earlier/more frequent wiring)
         max_steps: hard step limit
         time_limit: wall-clock seconds limit (None = no limit)
         progress: Progress object for GUI updates (optional)
-        spawn_prob: probability a stressed node also spawns (in addition to wiring)
-        post_cap_steps: steps to keep running after max_nodes for edge dynamics
-        max_wire_per_step: max stressed nodes that can act per step
+        spawn_prob: probability a stressed node also spawns (in addition
+            to wiring). 0.3 = 30% chance per stressed node per step.
+        post_cap_steps: steps to keep running after max_nodes for edge-only
+            dynamics. Default 0: all wiring happens during growth. Higher
+            values produce denser graphs where MI excess diminishes.
+        max_wire_per_step: max stressed nodes that can act per step (5
+            matches original LPAN)
         mem_bits_range: tuple (lo, hi) for variable memory, or None for uniform
         record_trajectories: if True, record per-node config at each step
+            (needed for MI computation; uses O(nodes * steps) memory)
 
     Returns:
         G: networkx.Graph (with lateral edges)

@@ -1,0 +1,44 @@
+============================================================
+Attention Model + Threshold Analysis
+============================================================
+
+PART 1: ATTENTION MODEL (parameter-free)
+  Seeds: 3/3
+  Nodes: 500, Memory: 8 bits
+
+  Wiring trigger: effective state revisit (exact loop)
+  Spawning trigger: effective state revisit (same)
+  Parameters: NONE
+
+  Topology alpha: 2.528 +/- 0.292
+  MI ratio (rho): 0.985 +/- 0.001
+
+  Topology: HEAVY-TAILED | MI excess: ABSENT
+
+PART 2: LPAN THRESHOLD SWEEP
+  Same engine, varying pressure_threshold.
+  Shows MI excess requires proactive wiring (threshold < 1.0).
+
+  Threshold  |  rho (mean +/- std)  |  avg_deg
+  --------------------------------------------------
+  0.50         |  1.167 +/- 0.017         |  8.1 ***
+  0.70         |  1.173 +/- 0.012         |  7.4 ***
+  0.80         |  1.215 +/- 0.000         |  6.7 ***
+
+INTERPRETATION:
+  Heavy-tailed topology is a generic property of growing networks
+  under anti-loop pressure. It emerges parameter-free.
+
+  MI excess is NOT generic. It requires proactive wiring: entities
+  that add connections BEFORE they fully loop (threshold < 1.0).
+  At exact loop (threshold = 1.0), the effective state reset severs
+  trajectory continuity, destroying the correlations that create
+  MI excess.
+
+  This means MI excess is a signature of a BEHAVIORAL REGIME
+  (proactive connection-seeking), not of anti-loop dynamics alone.
+
+Per-seed detail (attention model):
+  attention seed=5000: alpha=2.345, 500n/1070e, rho=0.98
+  attention seed=5001: alpha=2.299, 500n/1048e, rho=0.98
+  attention seed=5002: alpha=2.940, 500n/1074e, rho=0.99

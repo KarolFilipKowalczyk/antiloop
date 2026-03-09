@@ -1,0 +1,40 @@
+============================================================
+Proactive Wiring Hypothesis Test
+============================================================
+Memory: 6 bits (C=64)
+
+PART 1: ENTITY LIFETIME (HYPOTHESIS FALSIFIED)
+  Birthday paradox bound: ~90 steps
+
+  Strategy          | Mean Life | Ratio vs Static
+  --------------------------------------------------
+  static              |      73.2 | 1.00x
+  proactive_T=32      |      73.9 | 1.01x
+  proactive_T=64      |      80.7 | 1.10x
+  proactive_T=128     |      73.3 | 1.00x
+
+  RESULT: No difference. Proactive wiring does NOT extend
+  entity lifetime. XOR hash is sufficiently mixing that the
+  birthday paradox bound holds regardless of wiring strategy.
+
+PART 2: GROWTH DYNAMICS (WHAT ACTUALLY DIFFERS)
+  Threshold | Steps | Edges | Pressure% | Resets
+  --------------------------------------------------
+  0.5       |   209 |   790 |       99% | 6
+  0.7       |   392 |   766 |       97% | 21
+  0.9       |   466 |   686 |       92% | 52
+  1.0       |  1410 |   819 |        0% | 631
+
+INTERPRETATION:
+  The MI excess at threshold < 1.0 correlates with:
+  - Faster growth (fewer steps to reach max nodes)
+  - Fewer effective set resets (most wiring is pressure-based)
+  - Burst wiring patterns (many edges formed in quick succession)
+
+  The MI excess does NOT correlate with:
+  - Entity lifetime (identical across strategies)
+  - Total edge count (similar avg degree at all thresholds)
+
+  The mechanism connecting growth dynamics to MI excess
+  remains an open question. The proactive-selection
+  hypothesis is falsified.

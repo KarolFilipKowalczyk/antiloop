@@ -1,0 +1,16 @@
+============================================================
+Birthday Paradox Prediction: Zero-Parameter Test
+============================================================
+
+PREDICTIONS (derived from A1+A2+A3, zero free parameters):
+  Mean lifetime / C = sqrt(pi/2) = 1.2533
+  CV of lifetime    = sqrt((4-pi)/pi) = 0.5227
+  Growth rate * C   = sqrt(2/pi) = 0.7979
+
+RESULTS:
+  Measured mean/C: 1.2202 +/- 0.0333
+  Measured CV: 0.5235 +/- 0.0136
+  Measured rate*C: 0.5927 +/- 0.0480
+
+Null models: Poisson CV=1.000, Deterministic CV=0.000
+Anti-loop prediction: CV=0.523

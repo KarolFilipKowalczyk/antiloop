@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(systeminfo:*)",
+      "Bash(findstr:*)",
+      "Bash(wmic os get caption:*)",
+      "Bash(wmic:*)",
+      "Bash(wmic memorychip get capacity:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(nvidia-smi:*)",
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(git mv:*)",
+      "Bash(git rm:*)",
+      "Bash(python3:*)",
+      "Bash(start visualization/output/intro_antiloop.png)",
+      "Bash(start visualization/output/c1_consciousness_band.png)",
+      "Bash(start visualization/output/c2_suffering.png)",
+      "Bash(start visualization/output/c3_scalefree.png)",
+      "Bash(start \"C:\\\\Users\\\\karol\\\\Desktop\\\\GIT\\\\antiloop\\\\visualization\\\\output\\\\c1_consciousness_band.png\")",
+      "Bash(start \"\" \"C:\\\\Users\\\\karol\\\\Desktop\\\\GIT\\\\antiloop\\\\visualization\\\\output\\\\c1_consciousness_band.png\")",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(rm:*)",
+      "Read(//c/Program Files/NVIDIA GPU Computing Toolkit/**)",
+      "Read(//c/Program Files/NVIDIA Corporation/**)",
+      "Bash(where nvcc)",
+      "Bash(CUDA_PATH=\"C:/Users/karol/AppData/Local/Programs/Python/Python310/lib/site-packages/nvidia/cuda_nvrtc\" python:*)",
+      "Bash(git:*)",
+      "WebSearch",
+      "Bash(ls:*)"
+    ]
+  }
+}

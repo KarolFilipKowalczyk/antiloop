@@ -30,12 +30,24 @@ from simulation.shared.analysis import (
 TITLE = "Universality of alpha ~ 2.0 Across Encodings"
 
 
-def _run_model(mem_bits, max_nodes, seed, time_limit, encoding, hash_type):
-    """Run spawn model with a specific encoding and hash type."""
+def _run_model(mem_bits, max_nodes, seed, time_limit, encoding, hash_type,
+               progress=None, spawn_mode='loop'):
+    """Run spawn model with a specific encoding and hash type.
+
+    spawn_mode: 'loop' = spawn on effective state revisit (default)
+                'random' = spawn with fixed probability per node per step
+    """
     model = SpawnModel(mem_bits, max_nodes, seed, encoding=encoding)
-    model._hash_type = hash_type  # store for use in step_all override
+    model._hash_type = hash_type
+    rng = np.random.default_rng(seed + 99999)
     t_start = time.time()
     growth_log = [(0, 1)]
+    last_update = 0
+
+    # For random spawning, calibrate probability to match flat growth rate
+    # Flat model spawns ~1 node per C steps, so p ~ 1/(C * N) per node
+    C = 2 ** mem_bits
+    spawn_prob = 1.0 / C  # per node per step
 
     for step in range(1, 500000):
         if time_limit and (time.time() - t_start) > time_limit:
@@ -45,18 +57,37 @@ def _run_model(mem_bits, max_nodes, seed, time_limit, encoding, hash_type):
         _step_all_custom(model, hash_type)
 
         if model.n_nodes < max_nodes:
-            for nid in range(model.n_nodes):
-                if model.looped[nid]:
-                    degree = len(model._neighbor_sets[nid])
-                    interval = step - int(model.last_spawn_step[nid])
-                    model.spawn_events.append((nid, step, degree, interval))
-                    model.last_spawn_step[nid] = step
+            if spawn_mode == 'loop':
+                for nid in range(model.n_nodes):
+                    if model.looped[nid]:
+                        degree = len(model._neighbor_sets[nid])
+                        interval = step - int(model.last_spawn_step[nid])
+                        model.spawn_events.append((nid, step, degree, interval))
+                        model.last_spawn_step[nid] = step
 
-                    model._add_node(parent_id=nid, step=step)
-                    model.looped[nid] = False
-                    model.effective_sets[nid] = set()
-                    if model.n_nodes >= max_nodes:
-                        break
+                        model._add_node(parent_id=nid, step=step)
+                        model.looped[nid] = False
+                        model.effective_sets[nid] = set()
+                        if model.n_nodes >= max_nodes:
+                            break
+            elif spawn_mode == 'random':
+                # Each node spawns with fixed probability, independent of state
+                n_current = model.n_nodes
+                for nid in range(n_current):
+                    if rng.random() < spawn_prob:
+                        degree = len(model._neighbor_sets[nid])
+                        interval = step - int(model.last_spawn_step[nid])
+                        model.spawn_events.append((nid, step, degree, interval))
+                        model.last_spawn_step[nid] = step
+
+                        model._add_node(parent_id=nid, step=step)
+                        if model.n_nodes >= max_nodes:
+                            break
+
+        # Update seed progress bar
+        if progress and model.n_nodes - last_update >= 10:
+            progress.update_seed(model.n_nodes, max_nodes)
+            last_update = model.n_nodes
 
         growth_log.append((step, model.n_nodes))
         if model.n_nodes >= max_nodes:
@@ -133,11 +164,13 @@ def run(progress, out_dir, n_seeds, max_nodes, mem_bits, time_budget, **_):
     D_max = min(C ** 2, 4096)
     t_start = time.time()
 
+    # Each entry: (name, encoding, color, spawn_mode)
     hash_types = [
-        ('flat', 'flat', '#999999'),
-        ('polynomial', 'hierarchical', '#2196F3'),
-        ('fnv', 'hierarchical', '#4CAF50'),
-        ('additive', 'hierarchical', '#FF9800'),
+        ('flat', 'flat', '#999999', 'loop'),
+        ('polynomial', 'hierarchical', '#2196F3', 'loop'),
+        ('fnv', 'hierarchical', '#4CAF50', 'loop'),
+        ('additive', 'hierarchical', '#FF9800', 'loop'),
+        ('random', 'hierarchical', '#E91E63', 'random'),
     ]
 
     progress.log("Universality of alpha ~ 2.0 Across Encodings")
@@ -160,7 +193,7 @@ def run(progress, out_dir, n_seeds, max_nodes, mem_bits, time_budget, **_):
             break
         seed = 40000 + i
 
-        for ht_name, encoding, color in hash_types:
+        for ht_name, encoding, color, spawn_mode in hash_types:
             if time.time() - t_start > time_budget * 0.90:
                 break
             run_idx += 1
@@ -169,7 +202,8 @@ def run(progress, out_dir, n_seeds, max_nodes, mem_bits, time_budget, **_):
 
             G, n, gl, spawn_events = _run_model(
                 mem_bits, max_nodes, seed, time_limit=per_run,
-                encoding=encoding, hash_type=ht_name)
+                encoding=encoding, hash_type=ht_name if spawn_mode == 'loop' else 'polynomial',
+                progress=progress, spawn_mode=spawn_mode)
 
             results[ht_name].append({
                 'G': G, 'n': n, 'gl': gl, 'seed': seed,
@@ -186,7 +220,7 @@ def run(progress, out_dir, n_seeds, max_nodes, mem_bits, time_budget, **_):
     all_alphas = {}
     all_csn = {}
 
-    for ht_name, encoding, color in hash_types:
+    for ht_name, encoding, color, _sm in hash_types:
         alphas = []
         progress.log(f"\n  {ht_name.upper()}:")
 
@@ -205,7 +239,7 @@ def run(progress, out_dir, n_seeds, max_nodes, mem_bits, time_budget, **_):
 
     # Inter-spawn intervals
     progress.log(f"\n  INTER-SPAWN INTERVALS:")
-    for ht_name, encoding, color in hash_types:
+    for ht_name, encoding, color, _sm in hash_types:
         all_events = []
         for d in results[ht_name]:
             all_events.extend(d['spawn_events'])
@@ -230,7 +264,7 @@ def run(progress, out_dir, n_seeds, max_nodes, mem_bits, time_budget, **_):
     progress.log(f"\n  SUMMARY:")
     progress.log(f"    {'Hash':<14s} {'alpha mean':>8s} {'alpha std':>8s} {'seeds':>6s}")
     progress.log(f"    {'-'*40}")
-    for ht_name in ['flat', 'polynomial', 'fnv', 'additive']:
+    for ht_name in ['flat', 'polynomial', 'fnv', 'additive', 'random']:
         if ht_name in all_alphas:
             m, s, n = all_alphas[ht_name]
             progress.log(f"    {ht_name:<14s} {m:>8.3f} {s:>8.3f} {n:>6d}")
@@ -246,6 +280,14 @@ def run(progress, out_dir, n_seeds, max_nodes, mem_bits, time_budget, **_):
         else:
             progress.log(f"  alpha varies — result is encoding-dependent")
 
+    # Random control comparison
+    if 'random' in all_alphas and 'polynomial' in all_alphas:
+        progress.log(f"\n  RANDOM CONTROL:")
+        progress.log(f"    Polynomial (loop-triggered): alpha = {all_alphas['polynomial'][0]:.3f}")
+        progress.log(f"    Random (prob-triggered):     alpha = {all_alphas['random'][0]:.3f}")
+        progress.log(f"    If similar -> deceleration comes from encoding, not spawn trigger")
+        progress.log(f"    If different -> anti-loop constraint matters")
+
     # === Plot ===
     os.makedirs(out_dir, exist_ok=True)
     _plot_results(results, hash_types, C, D_max, max_nodes, out_dir, progress)
@@ -258,7 +300,7 @@ def _plot_results(results, hash_types, C, D_max, max_nodes, out_dir, progress):
 
     # Panel 1: Growth curves
     ax = axes[0, 0]
-    for ht_name, encoding, color in hash_types:
+    for ht_name, encoding, color, _sm in hash_types:
         for d in results[ht_name]:
             steps, nodes = zip(*d['gl'])
             ax.plot(steps, nodes, color=color, alpha=0.4, linewidth=1)
@@ -271,7 +313,7 @@ def _plot_results(results, hash_types, C, D_max, max_nodes, out_dir, progress):
 
     # Panel 2: Log-log degree distributions (CCDF)
     ax = axes[0, 1]
-    for ht_name, encoding, color in hash_types:
+    for ht_name, encoding, color, _sm in hash_types:
         for d in results[ht_name][:1]:  # first seed only for clarity
             if d['n'] >= 50:
                 degs, ccdf = get_ccdf(d['G'])
@@ -289,7 +331,7 @@ def _plot_results(results, hash_types, C, D_max, max_nodes, out_dir, progress):
 
     # Panel 3: Inter-spawn interval vs degree
     ax = axes[1, 0]
-    for ht_name, encoding, color in hash_types:
+    for ht_name, encoding, color, _sm in hash_types:
         all_events = []
         for d in results[ht_name]:
             all_events.extend(d['spawn_events'])
@@ -315,7 +357,7 @@ def _plot_results(results, hash_types, C, D_max, max_nodes, out_dir, progress):
     ax = axes[1, 1]
     positions = []
     labels = []
-    for idx, (ht_name, encoding, color) in enumerate(hash_types):
+    for idx, (ht_name, encoding, color, _sm) in enumerate(hash_types):
         alphas = []
         for d in results[ht_name]:
             if d['n'] >= 50:

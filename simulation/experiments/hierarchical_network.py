@@ -36,11 +36,12 @@ from simulation.shared.analysis import (
 TITLE = "Hierarchical Network Growth"
 
 
-def _run_flat_model(mem_bits, max_nodes, seed, time_limit):
+def _run_flat_model(mem_bits, max_nodes, seed, time_limit, progress=None):
     """Run flat (XOR) spawn model with loop-only triggering."""
     model = SpawnModel(mem_bits, max_nodes, seed, encoding='flat')
     t_start = time.time()
     growth_log = [(0, 1)]
+    last_update = 0
 
     for step in range(1, 200000):
         if time_limit and (time.time() - t_start) > time_limit:
@@ -60,6 +61,10 @@ def _run_flat_model(mem_bits, max_nodes, seed, time_limit):
                     model.effective_sets[nid] = set()
                     if model.n_nodes >= max_nodes:
                         break
+
+        if progress and model.n_nodes - last_update >= 10:
+            progress.update_seed(model.n_nodes, max_nodes)
+            last_update = model.n_nodes
 
         growth_log.append((step, model.n_nodes))
         if model.n_nodes >= max_nodes:
@@ -101,7 +106,7 @@ def run(progress, out_dir, n_seeds, max_nodes, mem_bits, time_budget, **_):
         progress.update(i * 2, n_seeds * 2, "Flat", f"seed {i+1}")
         progress.update_seed(0, target)
         G_f, nd_f, gl_f = _run_flat_model(
-            mem_bits, target, seed, time_limit=per_seed)
+            mem_bits, target, seed, time_limit=per_seed, progress=progress)
         n_f = G_f.number_of_nodes()
         steps_f = gl_f[-1][0]
         flat_data.append({
@@ -115,7 +120,8 @@ def run(progress, out_dir, n_seeds, max_nodes, mem_bits, time_budget, **_):
         progress.update(i * 2 + 1, n_seeds * 2, "Hier", f"seed {i+1}")
         progress.update_seed(0, target)
         G_h, nd_h, gl_h = run_hierarchical_model(
-            mem_bits, target, seed, time_limit=per_seed, D_max=D_max)
+            mem_bits, target, seed, time_limit=per_seed, D_max=D_max,
+            progress=progress)
         n_h = G_h.number_of_nodes()
         steps_h = gl_h[-1][0]
         hier_data.append({

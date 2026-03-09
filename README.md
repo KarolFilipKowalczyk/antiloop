@@ -16,7 +16,8 @@ If network nodes are finite automata that may not revisit a state, then encoding
 
 ## Simulation results
 
-- **Inter-spawn intervals (central result):** under polynomial hashing, intervals jump 8.8x from degree 1 to degree 2. Under flat encoding, intervals are constant across all degrees. Deceleration tracks encoding quality: polynomial 8.8x, FNV 7.7x, additive 1.4x. (10 seeds, 1000 nodes, C=256.)
+- **Inter-spawn intervals (central result):** under polynomial hashing, intervals jump 8.9x from degree 1 to degree 2. Under flat encoding, intervals are constant across all degrees. Deceleration tracks encoding quality: polynomial 8.9x, FNV 7.8x, additive 1.4x. (10 seeds, 1000 nodes, C=256.)
+- **Random-spawning control:** same hierarchical encoding but spawning at fixed probability instead of on loop detection — intervals constant, alpha = 2.86. Proves deceleration requires the anti-loop constraint.
 - **Universality:** three different hierarchical hash functions all produce heavier-tailed degree distributions than flat encoding, with the tail heaviness tracking encoding quality. Distributions are not strict power laws (lognormal fits better per CSN testing).
 - **Isolated entity (C=64):** flat lifetime ~80 at all degrees. Hierarchical: 80/643/2641 at k=1/2/3 (34x ratio). log(lifetime) slope = 1.75, predicted log(C)/2 = 2.08, R² = 0.99.
 - **Entity lifetime:** CV = 0.524 ± 0.014 (predicted: 0.523, the Rayleigh invariant). Zero free parameters.

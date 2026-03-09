@@ -8,19 +8,23 @@ Karol Kowalczyk · March 2026
 
 ## Abstract
 
-Network growth models require assumptions about how node activity changes with connectivity. Preferential attachment assumes well-connected nodes attract more connections. Aging models (Dorogovtsev & Mendes, 2000) impose deceleration as a parameter. We identify a sufficient condition for deceleration: if nodes are finite automata under a no-repeat constraint, and their input encoding distinguishes more patterns as degree increases, then well-connected nodes take longer to exhaust their effective state space. The central result is a control experiment: nodes with hierarchical encoding that spawn at fixed probability (ignoring loop detection) show constant inter-spawn intervals across all degrees (alpha = 2.86, matching flat encoding). The same nodes, spawning on loop detection, show intervals that jump 8.9x from degree 1 to degree 2. This isolates the no-repeat constraint as the mechanism producing deceleration. The degree of deceleration tracks encoding quality: polynomial 8.9x, FNV 7.8x, additive 1.4x (10 seeds, 1000 nodes, C = 256). The resulting degree distributions are heavier-tailed than flat encoding, though not strict power laws (lognormal fits better in all cases per Clauset-Shalizi-Newman testing).
+Network growth models require assumptions about how node activity changes with connectivity. Preferential attachment assumes well-connected nodes attract more connections. Aging models (Dorogovtsev & Mendes, 2000) impose deceleration as a parameter. We identify a sufficient condition for deceleration: if nodes are finite automata under a no-repeat constraint, and their input encoding distinguishes more patterns as degree increases, then well-connected nodes take longer to exhaust their effective state space. The central result is a control experiment: nodes with hierarchical encoding that spawn at fixed probability (ignoring loop detection) show constant inter-spawn intervals across all degrees (alpha = 2.86, matching flat encoding). The same nodes, spawning on loop detection, show intervals that jump 8.9x between birth-to-first-spawn and first-to-second-spawn intervals. This isolates the no-repeat constraint as the mechanism producing deceleration. The degree of deceleration tracks encoding quality: polynomial 8.9x, FNV 7.8x, additive 1.4x (10 seeds, 1000 nodes, C = 256). The resulting degree distributions are heavier-tailed than flat encoding, though not strict power laws (lognormal fits better in all cases per Clauset-Shalizi-Newman testing).
 
 ---
 
 ## 1. Model
 
-### 1.1 Finite transducer formulation
+### 1.1 Architecture
 
-Each node is a Mealy machine M = (S, I, O, delta, lambda, s_0) with finite state set |S| = C, receiving input from k neighbors. The machine operates under a **no-repeat constraint**: its trajectory through effective states (s, i) may not revisit any pair. When the machine is forced into a repeated effective state, it spawns a new machine, creating a connection.
+Each node is a deterministic finite automaton A = (S, I, delta, s_0) with |S| = C internal states, input alphabet I with |I| = D, transition function delta: S x I -> S, and initial state s_0. The automaton receives input from k neighbors.
 
-The machine's **encoding** is a function g: Sigma^k -> I that compresses the raw input alphabet Sigma^k (the Cartesian product of k neighbor outputs) into the machine's input alphabet I, with |I| = D. The **effective state space** is S x I, of size C x D. The encoding is a fixed component of the transducer — it is part of the machine's specification, not an external module.
+An **encoding function** g: Sigma^k -> I maps the raw input space (the Cartesian product of k neighbor states, each drawn from an alphabet Sigma with |Sigma| = C) into the automaton's input alphabet I. The encoding is external to the automaton: delta is defined over I, not over Sigma^k. The automaton and its encoding together form a composite system; the encoding determines what the automaton can distinguish about its inputs.
 
-This formulation places the model within the theory of finite transducers (Hopcroft & Ullman, 1979; Berstel, 1979). The no-repeat constraint is non-standard — finite automata theory typically studies acceptance and language recognition, not trajectory constraints — but the state-space bounds that follow are elementary.
+The **effective state space** is S x I, of size C x D. Each step, the composite system occupies one pair (s, i) where s is the automaton's current state and i = g(raw input) is the encoded input.
+
+The automaton operates under a **no-repeat constraint**: its trajectory through effective states (s_0, i_0), (s_1, i_1), ... may not revisit any pair. When the automaton is forced into a repeated effective state, it spawns a new automaton, creating a connection.
+
+**On the architecture.** The encoding is not part of the automaton's transition function — it is a preprocessing stage. This means the automaton is *defined relative to an encoding*: the same delta operates on different effective state spaces depending on which g is attached. This is a modeling choice, not a claim about internal structure. The question of which transition functions "naturally" implement hierarchical encoding (without external preprocessing) is open (see Section 5, O2). In the simulation, each node has identically structured but distinct transition tables (generated by a seeded hash mixing the node ID), so nodes are identically distributed but not identical machines.
 
 ### 1.2 Encoding classes
 
@@ -28,25 +32,27 @@ An encoding g is **flat** if |I| = C regardless of k. Example: XOR of neighbor s
 
 An encoding g is **hierarchical** if |I| grows with k. The strongest case is |I| = C^k (injective encoding): each distinct input pattern maps to a distinct category. Example: polynomial hashing h = sum(x_i * C^i) mod C^k.
 
-**What class of functions achieves D_eff = C^k?** Any injective function g: {0,...,C-1}^k -> {0,...,C^k-1}. Polynomial hashing approximates this when C^k fits in machine arithmetic. The simulation uses three concrete implementations (polynomial, FNV, additive) to test sensitivity to the specific function chosen.
+**What class of functions achieves D = C^k?** Any injective function g: {0,...,C-1}^k -> {0,...,C^k-1}. Polynomial hashing approximates this when C^k fits in machine arithmetic. The simulation uses three concrete implementations (polynomial, FNV, additive) to test sensitivity to the specific function chosen.
 
-**Input uniformity assumption.** The birthday-paradox lifetime estimate sqrt(pi*C*D/2) assumes uniform random inputs. Network inputs are not uniform — neighboring nodes share graph topology and evolve under coupled dynamics. The isolated-automaton experiments (Section 3.1) confirm the birthday-paradox prediction under controlled uniform inputs. The network experiments (Sections 3.2-3.3) measure the actual behavior under correlated inputs; the qualitative prediction (deceleration increasing with degree) holds, but the quantitative lifetime formula is not guaranteed to apply.
+**Input uniformity assumption.** The birthday-paradox lifetime estimate sqrt(pi*C*D/2) assumes uniform random inputs. Network inputs are not uniform — neighboring nodes share graph topology and evolve under coupled dynamics. The isolated-automaton experiments (Section 3.1) confirm the birthday-paradox prediction under controlled uniform inputs. The network experiments (Sections 3.2-3.3) measure actual behavior under correlated inputs. The qualitative prediction (deceleration increasing with degree) holds empirically, but this is a simulation result, not a theoretical guarantee. The theoretical argument covers only the worst-case bound (Section 2) and the birthday-paradox estimate under i.i.d. inputs; extending it to correlated network inputs is open (Section 5, O1).
 
 ---
 
 ## 2. State-space bound
 
-**Observation (pigeonhole).** A machine with C internal states and D input categories must revisit an effective state within C x D + 1 steps.
+**Observation (pigeonhole).** A composite system with C internal states and D input categories must revisit an effective state within C x D + 1 steps.
 
-This is a direct application of the pigeonhole principle to the effective state space S x I. It is not novel as a combinatorial fact. The contribution is the application to network growth: because D depends on degree k under hierarchical encoding, the bound produces degree-dependent deceleration without requiring it as a parameter.
+*Proof.* There are C x D distinct effective states. By pigeonhole, a trajectory of length C x D + 1 must contain a repeat.
 
-**Flat encoding:** bound = C x C + 1 = C^2 + 1, independent of k.
+This is elementary. The contribution is not the bound itself but its application: because D depends on degree k under hierarchical encoding, the bound produces degree-dependent trajectory limits without requiring deceleration as a parameter.
 
-**Hierarchical encoding:** bound = C x C^k + 1 = C^(k+1) + 1, exponential in k.
+**Flat encoding:** bound = C^2 + 1, independent of k.
 
-Under stochastic inputs, the birthday paradox gives expected collision time sqrt(pi*C*D/2). For flat encoding this is O(C), independent of k. For hierarchical encoding this is O(C^((k+1)/2)), exponential in k.
+**Hierarchical encoding:** bound = C^(k+1) + 1, exponential in k.
 
-**Consequence for networks.** Under spawning-on-loop, collision time equals inter-spawn interval. Flat-encoding nodes reproduce at constant rate. Hierarchical-encoding nodes reproduce slower as they gain connections. This is a sufficient condition for anti-preferential attachment: it follows from the model specification, but the model specification itself — particularly the choice of encoding function — is a modeling choice, not a derivation from first principles.
+Under i.i.d. uniform inputs, the birthday paradox gives expected collision time sqrt(pi*C*D/2). For flat encoding this is O(C), independent of k. For hierarchical encoding this is O(C^((k+1)/2)), exponential in k.
+
+**What this does and does not establish.** The bound guarantees that hierarchical-encoding nodes *can* have longer trajectories. It does not guarantee that they *will* under network dynamics — that depends on the input distribution, which is not i.i.d. uniform in a growing network. The simulation (Section 3) tests whether the qualitative prediction holds empirically. The control experiment (Section 3.2) tests whether the no-repeat constraint is the operative mechanism.
 
 ---
 
@@ -54,7 +60,7 @@ Under stochastic inputs, the birthday paradox gives expected collision time sqrt
 
 ### 3.1 Isolated automaton
 
-C = 64, k = 1, 2, 3 neighbors, 10,000 trials per condition. Inputs are uniform random (i.i.d. draws from {0,...,C-1} per neighbor per step).
+C = 64, k = 1, 2, 3 neighbors, 10,000 trials per condition. Inputs are i.i.d. uniform draws from {0,...,C-1} per neighbor per step. This is the setting where the birthday-paradox prediction applies.
 
 | k | Flat lifetime | Hierarchical lifetime | Ratio |
 |---|---|---|---|
@@ -66,11 +72,11 @@ log(lifetime) vs k: slope = 1.75, predicted log(C)/2 = 2.08, R^2 = 0.99.
 
 Lifetime CV = 0.524 +/- 0.014 across C = 16-128 (predicted: 0.523, the Rayleigh invariant for birthday-paradox collisions).
 
-These results confirm the birthday-paradox prediction under the uniform-input assumption.
-
 ### 3.2 Growing network: the control experiment
 
-This is the central test. The question is not just whether hierarchical encoding produces deceleration, but whether the no-repeat constraint is necessary for it.
+**The measurement problem.** In a growing network, a node's degree increases each time it spawns. The interval at degree 1 is the time from birth to first spawn (every node begins at degree 1, connected to its parent). The interval at degree 2 is the time from first spawn to second spawn. These are measurements of different phases of the same node's life, not steady-state measurements at fixed degree. The 8.9x ratio reported below compares birth-to-first-spawn time to first-to-second-spawn time. A cleaner measurement at fixed degree would require a different experimental design (see Section 5, O4).
+
+Despite this limitation, the control experiment is informative: if the ratio between these phases differs systematically between loop-triggered and random spawning, the no-repeat constraint is implicated.
 
 **Design.** Spawn model, C = 256, 1000 nodes, 10 seeds. Five conditions:
 
@@ -94,9 +100,7 @@ The random control is the key condition. It uses the same hierarchical encoding 
 
 **Interpretation.** The random control shows constant intervals across all degrees (~129), matching flat encoding. Conditions 2-4 show increasing intervals with degree. The difference is spawning mechanism only — the encoding is identical between conditions 2 and 5. This isolates the no-repeat constraint as the necessary ingredient.
 
-**Caveat on degree-1 intervals.** The interval at degree 1 is the time from a node's birth to its first spawn. Every node begins at degree 1 (connected to its parent). This is a birth interval, not a steady-state inter-spawn interval for a degree-1 node in equilibrium. The degree-2 interval is the time between first and second spawn for nodes that have spawned once. The 8.9x ratio compares birth interval to second-spawn interval. A cleaner measurement would track nodes that maintain constant degree over multiple spawn cycles, but this is rare in the growing-network setting (degree increases monotonically with each spawn).
-
-**Encoding quality.** The additive hash is weaker because addition is more collision-prone than multiplication: distinct input vectors (e.g., [1,2] and [2,1] weighted by position) can produce the same sum, reducing the effective number of distinguishable patterns below C^k. The deceleration ratio tracks encoding quality as predicted: stronger encoding -> larger D_eff -> more deceleration.
+**Encoding quality.** The additive hash is weaker because addition is more collision-prone than multiplication: distinct input vectors (e.g., [1,2] and [2,1] weighted by position) can produce the same sum, reducing the effective number of distinguishable patterns below C^k. The deceleration ratio tracks encoding quality: stronger encoding -> larger D_eff -> more deceleration. This is not a free parameter — it is a consequence of the encoding function's discriminability.
 
 ### 3.3 Degree distributions
 
@@ -113,6 +117,12 @@ Full Clauset-Shalizi-Newman analysis (10 seeds, 1000 nodes, C = 256):
 In all conditions — including hierarchical — lognormal fits better than power law. The distributions are heavy-tailed but not strict power laws. At 1000 nodes with maximum degree ~20, there is insufficient range for reliable power-law claims. The alpha values are reported for comparison across conditions only.
 
 The random control (alpha = 2.86) matches flat encoding (2.87), confirming that the degree distribution difference requires the no-repeat constraint, not just encoding quality.
+
+### 3.4 Simulation caveats
+
+**Node heterogeneity.** In the simulation, each node's transition table is generated by a seeded hash that incorporates the node ID. This means different nodes with identical (state, encoded_input) pairs may produce different next states. Nodes are identically *distributed* but not identical machines. The theoretical argument assumes identical machines; the simulation relaxes this to identically distributed machines.
+
+**Effective-state vs visited-state tracking.** The engine tracks two distinct sets per node: the *effective state set* (pairs of pre-step config and encoded input, used for loop detection) and the *visited state set* (post-step configs, used for counting distinct states visited). These track different quantities and are updated at different points in the step cycle.
 
 ---
 
@@ -133,13 +143,13 @@ This is a conditional result. It identifies a sufficient condition for decelerat
 
 ## 5. Open Problems
 
-1. **Input correlations.** The birthday-paradox lifetime holds for uniform inputs. Network inputs are correlated. The qualitative prediction (deceleration with degree) holds in simulation, but tight bounds under correlated inputs are open.
+**O1. Input correlations.** The birthday-paradox lifetime holds for i.i.d. uniform inputs. Network inputs are correlated (neighbors share topology, dynamics are coupled). The qualitative prediction (deceleration increasing with degree) holds empirically but lacks theoretical justification under correlated inputs. The gap is fundamental: the state-space bound (Section 2) gives worst-case trajectory length, the birthday paradox gives expected length under i.i.d. inputs, but neither covers the actual network-input regime. Tight bounds as a function of input correlation structure would substantially strengthen the result.
 
-2. **Encoding classification.** Which classes of transition functions (without explicit preprocessing) correspond to flat vs. hierarchical effective state spaces? A characterization in terms of the Myhill-Nerode equivalence classes of the transducer's input-output behavior would connect this work to established automata theory.
+**O2. Encoding as transition-function property.** The encoding is currently external preprocessing. Can it be characterized as a property of the transition function itself? Specifically: given a transition function delta: S x I -> S, what is the effective discriminability of delta — i.e., how many functionally distinct input categories does delta distinguish? A characterization in terms of Myhill-Nerode equivalence classes or the structure of the state-transition graph would connect this work to established automata theory and resolve whether "flat" vs "hierarchical" is a property of the machine or of the preprocessing.
 
-3. **Scale.** The simulation uses 1000 nodes. Degree distributions at this scale cannot distinguish power laws from lognormals. Simulations at 10^4-10^5 nodes would clarify the distributional form and test whether the deceleration effect persists at scale.
+**O3. Scale.** The simulation uses 1000 nodes. Degree distributions at this scale cannot distinguish power laws from lognormals. Simulations at 10^4-10^5 nodes would clarify the distributional form and test whether the deceleration effect persists at scale.
 
-4. **Steady-state intervals.** The current measurement compares birth intervals (degree 1) to post-first-spawn intervals (degree 2). A direct measurement of steady-state inter-spawn intervals at fixed degree would strengthen the central claim, but requires a different experimental design (e.g., nodes with externally controlled, fixed degree).
+**O4. Steady-state intervals.** The current measurement compares birth intervals (degree 1) to post-first-spawn intervals (degree 2). A direct measurement of steady-state inter-spawn intervals at fixed degree would strengthen the central claim. This requires an experimental design where node degree is externally controlled (e.g., fixed-degree random graphs with loop-triggered spawning disabled, measuring only time-to-first-loop at each degree). This is a prerequisite for quantitative claims about the degree-interval relationship.
 
 ---
 

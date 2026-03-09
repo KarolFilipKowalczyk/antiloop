@@ -8,7 +8,7 @@ Karol Kowalczyk · March 2026
 
 ## Abstract
 
-Network growth models require assumptions about how node activity changes with connectivity. Preferential attachment assumes well-connected nodes attract more connections. Aging models (Dorogovtsev & Mendes, 2000) impose deceleration as a parameter. We derive deceleration instead. If nodes are finite automata under a no-repeat constraint, then encoding quality determines effective state space, and well-connected nodes with hierarchical encoding take exponentially longer to exhaust their states. This produces anti-preferential attachment — connectivity as cost, not benefit — yielding degree exponents α = 1.92–2.02 across three different hierarchical hash functions (10 seeds each, 1000 nodes), closer to empirical networks than standard preferential attachment (α = 3). The exponent tracks encoding quality: stronger hashes produce more deceleration and lower α.
+Network growth models require assumptions about how node activity changes with connectivity. Preferential attachment assumes well-connected nodes attract more connections. Aging models (Dorogovtsev & Mendes, 2000) impose deceleration as a parameter. We derive deceleration instead. If nodes are finite automata under a no-repeat constraint, then encoding quality determines effective state space, and well-connected nodes with hierarchical encoding take exponentially longer to exhaust their states. The central result: under polynomial hashing, the inter-spawn interval increases 8.8x from degree 1 to degree 2 (10 seeds, 1000 nodes, C = 256). Under flat encoding, intervals are constant across all degrees. This confirms the anti-loop theorem's prediction that connectivity is a cost, not a benefit — the opposite of preferential attachment. The degree of deceleration tracks encoding quality: stronger encodings produce more deceleration (polynomial 8.8x, FNV 7.7x, additive 1.4x per degree step). The resulting degree distributions are heavier-tailed than flat encoding, though not strict power laws (lognormal fits better in all cases per Clauset-Shalizi-Newman testing).
 
 ---
 
@@ -16,7 +16,9 @@ Network growth models require assumptions about how node activity changes with c
 
 Each node is a finite deterministic automaton with C internal states, receiving input from k connections. The automaton may not revisit a state (the anti-loop rule). When it exhausts its trajectory, it spawns a new automaton, creating a connection.
 
-The automaton's **encoding** maps s^k possible input patterns to D distinguishable categories. The **effective state space** is C × D: the automaton can occupy C internal states, each paired with D perceived inputs. After C × D + 1 steps, it must revisit an effective state (pigeonhole), and the deterministic transition function forces a loop.
+The automaton's **encoding** is a preprocessing step that maps s^k possible input patterns to D distinguishable categories before they enter the transition function. The **effective state space** is C × D: the automaton can occupy C internal states, each paired with D perceived inputs. After C × D + 1 steps, it must revisit an effective state (pigeonhole), and the deterministic transition function forces a loop.
+
+The encoding is not part of the automaton's transition function as defined by A1. It is an external module that determines how raw inputs are compressed before the automaton processes them. Different encodings on the same automaton produce different effective state spaces and therefore different loop times.
 
 ---
 
@@ -30,7 +32,7 @@ The automaton's **encoding** maps s^k possible input patterns to D distinguishab
 
 **Hierarchical encoding** (e.g., polynomial hash): D = C^k. Each connection multiplies the number of distinguishable input patterns by C.
 
-Under stochastic inputs, the birthday paradox gives expected lifetime √(πCD/2). For flat encoding this is O(C), independent of k. For hierarchical encoding this is O(C^((k+1)/2)), exponential in k.
+Under stochastic inputs, the birthday paradox gives expected lifetime sqrt(pi*C*D/2). For flat encoding this is O(C), independent of k. For hierarchical encoding this is O(C^((k+1)/2)), exponential in k.
 
 **Consequence for networks.** Under spawning-on-loop, lifetime equals inter-spawn interval. Flat-encoding nodes reproduce at constant rate. Hierarchical-encoding nodes reproduce exponentially slower as they gain connections. This is anti-preferential attachment — derived from the theorem, not assumed.
 
@@ -50,58 +52,64 @@ C = 64, k = 1, 2, 3 neighbors, 10,000 trials per condition.
 
 log(lifetime) vs k: slope = 1.75, predicted log(C)/2 = 2.08, R² = 0.99.
 
-Lifetime CV = 0.524 ± 0.014 across C = 16–128 (predicted: 0.523, the Rayleigh invariant).
+Lifetime CV = 0.524 +/- 0.014 across C = 16-128 (predicted: 0.523, the Rayleigh invariant).
 
-### 3.2 Growing network
+### 3.2 Growing network: inter-spawn intervals
 
-Spawn model, C = 256, 1000 nodes, 10 seeds. Flat (XOR) vs hierarchical (polynomial hash).
+This is the central test. The anti-loop theorem predicts that under hierarchical encoding, inter-spawn intervals should increase with degree. Under flat encoding, they should be constant.
 
-| Metric | Flat encoding | Hierarchical encoding |
-|---|---|---|
-| Degree exponent α | 2.90 ± 0.04 | **1.920 ± 0.002** |
-| Inter-spawn interval slope vs degree | −0.004 (constant) | **+0.18 (increasing)** |
-| Interval ratio deg=1 → deg=2 | 1.0x | **8.8x** |
-| Growth speed | baseline | 1.9x slower |
+Spawn model, C = 256, 1000 nodes, 10 seeds. Four encoding functions tested:
 
-Hierarchical encoding produces a heavier tail because reproduction concentrates at low-degree nodes. High-degree nodes are penalized by their own connectivity.
+**Inter-spawn interval at degree 1 vs degree 2:**
 
-### 3.3 Universality across encodings
+| Encoding | Interval deg=1 | Interval deg=2 | Ratio | Growth speed |
+|---|---|---|---|---|
+| Flat (XOR) | 267 | 260 | **1.0x** | baseline |
+| Polynomial | 311 | 2728 | **8.8x** | 3.8x slower |
+| FNV | 307 | 2371 | **7.7x** | 3.7x slower |
+| Additive | 278 | 394 | **1.4x** | 1.3x slower |
 
-Does α depend on the specific hash function, or is it a property of any hierarchical encoding? Three hierarchical hash functions tested (10 seeds, 1000 nodes, C = 256, full Clauset-Shalizi-Newman analysis):
+Under flat encoding, intervals are constant across all degrees (slope = -0.004). Under polynomial and FNV hashing, intervals jump sharply at degree 2 — well-connected nodes reproduce dramatically slower. Under additive hashing (a weaker encoding with effective D_eff < C^k), the jump is smaller.
 
-| Hash function | D_eff scaling | α mean ± std |
-|---|---|---|
-| Flat (XOR) | C (constant) | 2.869 ± 0.021 |
-| Polynomial | C^k (strong) | **1.920 ± 0.002** |
-| FNV | C^k (strong) | **1.923 ± 0.002** |
-| Additive (position-weighted) | < C^k (weak) | **2.018 ± 0.003** |
+The deceleration tracks encoding quality, as the theorem predicts: stronger encoding -> larger D_eff -> more deceleration. This is not a free parameter — it is a consequence of the hash function's ability to distinguish input patterns.
 
-The two strong hashes (polynomial and FNV) produce nearly identical exponents. The weaker additive hash produces a slightly higher α — less deceleration, heavier-but-less-heavy tail. The exponent tracks encoding quality, as the theorem predicts: stronger encoding → larger D_eff → more deceleration → lower α.
+### 3.3 Growing network: degree distributions
 
-CSN comparison: in all cases, lognormal and stretched-exponential fit better than strict power law (all R < 0, p < 0.001). The distributions are heavy-tailed but not pure power laws, consistent with Broido & Clauset (2019).
+The deceleration produces heavier-tailed degree distributions. Full Clauset-Shalizi-Newman analysis (10 seeds, 1000 nodes, C = 256):
 
-Inter-spawn intervals confirm the mechanism: flat encoding gives constant intervals across degrees (~265). Polynomial hash gives 8.8x jump from deg=1 to deg=2. FNV gives 7.7x. Additive gives only 1.4x — matching the α ordering.
+| Encoding | Fitted alpha | xmin | Tail fraction | PL vs lognormal |
+|---|---|---|---|---|
+| Flat (XOR) | 2.87 +/- 0.02 | 2 | 50% | Lognormal better (R = -4.6) |
+| Polynomial | 1.92 +/- 0.00 | 1 | 100% | Lognormal better (R = -27) |
+| FNV | 1.92 +/- 0.00 | 1 | 100% | Lognormal better (R = -27) |
+| Additive | 2.02 +/- 0.00 | 1 | 100% | Lognormal better (R = -13) |
+
+**Important caveat:** In all conditions — including flat — lognormal fits better than power law. The distributions are heavy-tailed but not strict power laws. The fitted alpha values characterize the shape of the full distribution, not a power-law tail. At 1000 nodes with maximum degree ~20, there is insufficient range for reliable power-law claims. The alpha values are reported for comparison across conditions, not as evidence of power-law behavior.
+
+The ordering is robust: polynomial and FNV produce the heaviest tails (alpha ~ 1.92), additive is intermediate (2.02), flat is lightest (2.87). This ordering matches the inter-spawn interval ratios exactly.
 
 ---
 
 ## 4. Comparison to Existing Models
 
-| Model | Deceleration mechanism | α | Derived or imposed? |
-|---|---|---|---|
-| Barabási-Albert (1999) | None (rich get richer) | 3.0 | — |
-| Dorogovtsev-Mendes (2000) | Aging parameter τ^(-α) | tunable | Imposed |
-| Amaral-Stanley (2000) | Connection costs/capacity | truncated | Imposed |
-| **This paper** | Encoding quality (anti-loop theorem) | **1.92–2.02** | **Derived** |
+| Model | Deceleration mechanism | Derived or imposed? |
+|---|---|---|
+| Barabasi-Albert (1999) | None (rich get richer) | -- |
+| Dorogovtsev-Mendes (2000) | Aging parameter tau^(-a) | Imposed |
+| Amaral-Stanley (2000) | Connection costs/capacity | Imposed |
+| **This paper** | Encoding quality (anti-loop theorem) | **Derived** |
 
-The anti-loop theorem provides the mechanism that aging models assume. The deceleration is not a parameter — it is a consequence of finite memory under a no-repeat constraint.
+The anti-loop theorem provides the mechanism that aging models assume. The deceleration is not a parameter — it is a consequence of finite memory under a no-repeat constraint. The degree of deceleration is determined by encoding quality, which is itself a property of the hash function mapping inputs to distinguishable categories.
 
 ---
 
 ## 5. Limitations
 
-The theorem is elementary (one-line pigeonhole proof). The novelty is the application to network growth: pointing the pigeonhole at encoding quality × connectivity and observing that it produces anti-preferential attachment.
+The theorem is elementary (one-line pigeonhole proof). The novelty is the application to network growth: pointing the pigeonhole at encoding quality x connectivity and observing that it produces anti-preferential attachment.
 
-The network-level result (10 seeds, 1000 nodes, CSN tested) is stable across three hash functions but moderate scale. Larger testing (10⁴–10⁵ nodes) would strengthen the claim. CSN analysis shows lognormal beats strict power law in all cases — the distributions are heavy-tailed, not pure power laws.
+The encoding is not formally part of the automaton — it is an external preprocessing step. A more rigorous formulation would define encoding as a property of the transition function itself, characterizing which classes of transition functions correspond to "flat" vs "hierarchical" behavior.
+
+The simulation is at moderate scale (1000 nodes). The degree distributions are not power laws — they are heavy-tailed, with lognormal fitting better in all cases. The alpha values are shape parameters for comparison, not evidence of power-law scaling. Larger simulations (10^4-10^5 nodes) would clarify the distributional form.
 
 The general case — tight bounds under input-dependent transition functions and correlated inputs — is open.
 
@@ -111,12 +119,14 @@ The model does not claim to replace preferential attachment. Both mechanisms may
 
 ## References
 
-Amaral, L.A.N., Scala, A., Barthélémy, M. & Stanley, H.E. (2000). Classes of small-world networks. *PNAS*, 97(21), 11149–11152.
+Amaral, L.A.N., Scala, A., Barthelemy, M. & Stanley, H.E. (2000). Classes of small-world networks. *PNAS*, 97(21), 11149-11152.
 
-Barabási, A.-L. & Albert, R. (1999). Emergence of scaling in random networks. *Science*, 286(5439), 509–512.
+Barabasi, A.-L. & Albert, R. (1999). Emergence of scaling in random networks. *Science*, 286(5439), 509-512.
 
 Broido, A.D. & Clauset, A. (2019). Scale-free networks are rare. *Nature Communications*, 10, 1017.
 
-Dorogovtsev, S.N. & Mendes, J.F.F. (2000). Evolution of networks with aging of sites. *Physical Review E*, 62(2), 1842–1845.
+Clauset, A., Shalizi, C.R. & Newman, M.E.J. (2009). Power-law distributions in empirical data. *SIAM Review*, 51(4), 661-703.
 
-Kim, J.H. & Montenegro, R. (2008). A birthday paradox for Markov chains. *Annals of Applied Probability*, 20(2), 495–521.
+Dorogovtsev, S.N. & Mendes, J.F.F. (2000). Evolution of networks with aging of sites. *Physical Review E*, 62(2), 1842-1845.
+
+Kim, J.H. & Montenegro, R. (2008). A birthday paradox for Markov chains. *Annals of Applied Probability*, 20(2), 495-521.

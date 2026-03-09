@@ -16,7 +16,8 @@ If network nodes are finite automata that may not revisit a state, then encoding
 
 ## Simulation results
 
-- **Growing network (10 seeds, 1000 nodes, C=256):** hierarchical encoding produces α = 1.976 ± 0.002 vs flat α = 2.90 ± 0.04. Inter-spawn intervals constant under flat, 3x jump per degree under hierarchical.
+- **Inter-spawn intervals (central result):** under polynomial hashing, intervals jump 8.8x from degree 1 to degree 2. Under flat encoding, intervals are constant across all degrees. Deceleration tracks encoding quality: polynomial 8.8x, FNV 7.7x, additive 1.4x. (10 seeds, 1000 nodes, C=256.)
+- **Universality:** three different hierarchical hash functions all produce heavier-tailed degree distributions than flat encoding, with the tail heaviness tracking encoding quality. Distributions are not strict power laws (lognormal fits better per CSN testing).
 - **Isolated entity (C=64):** flat lifetime ~80 at all degrees. Hierarchical: 80/643/2641 at k=1/2/3 (34x ratio). log(lifetime) slope = 1.75, predicted log(C)/2 = 2.08, R² = 0.99.
 - **Entity lifetime:** CV = 0.524 ± 0.014 (predicted: 0.523, the Rayleigh invariant). Zero free parameters.
 
